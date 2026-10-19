@@ -1,0 +1,14 @@
+# personal data: GPS tracks, health data
+data/raw/
+data/interim/
+data/processed/
+*.fit
+*.zip
+
+# SDK binaries (download separately)
+tools/*.jar
+
+# MATLAB
+*.asv
+*.m~
+slprj/
