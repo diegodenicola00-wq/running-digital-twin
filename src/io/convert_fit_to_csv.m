@@ -10,7 +10,8 @@ function nConverted = convert_fit_to_csv(cfg, overwrite)
         'FitCSVTool.jar not found in tools/. Download it from github.com/garmin/fit-sdk-tools/releases');
 
     javaExe = find_java();
-    files = dir(fullfile(cfg.paths.fit, '*.fit'));
+    % search subfolders too: Garmin zips extract into one folder per activity
+    files = dir(fullfile(cfg.paths.fit, '**', '*.fit'));
     if isempty(files)
         warning('No .fit files in %s', cfg.paths.fit);
     end

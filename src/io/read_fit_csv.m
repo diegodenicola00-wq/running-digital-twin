@@ -30,8 +30,10 @@ function act = read_fit_csv(csvFile)
     act.subSport = "";
 
     for i = 1:numel(lines)
-        % array values are quoted ("12|13") but never contain commas
-        c   = strsplit(strrep(lines{i}, '"', ''), ',');
+        % array values are quoted ("12|13") but never contain commas.
+        % CollapseDelimiters must be false: empty units produce ",," and
+        % collapsing them would shift every field/value/unit triplet.
+        c   = strsplit(strrep(lines{i}, '"', ''), ',', 'CollapseDelimiters', false);
         msg = c{3};
 
         if strcmp(msg, 'record')

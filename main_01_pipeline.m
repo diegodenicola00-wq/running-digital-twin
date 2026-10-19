@@ -41,6 +41,11 @@ for i = 1:numel(files)
     recs{end+1, 1} = r;                                         %#ok<SAGROW>
 end
 
+if isempty(rows)
+    error(['No runs found. Put the .fit files from Garmin in:\n  %s\n', ...
+           'then run main_01_pipeline again.'], cfg.paths.fit);
+end
+
 A = cell2table(rows, 'VariableNames', {'file','start','day','dur_min', ...
     'dist_km','hr_avg','hr_max','trimp','hr_valid'});
 A.rec = recs;
