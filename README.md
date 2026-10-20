@@ -24,7 +24,7 @@ p[k]    = p0 + k1*x1[k] - k2*x2[k]
 
 | Phase | Content | Status |
 |---|---|---|
-| 1 | Data pipeline: FIT files -> per-second records -> daily load | in progress |
+| 1 | Data pipeline: FIT files -> per-second records -> daily load | done (20 Oct 2026) |
 | 2 | Performance index, exploratory analysis | |
 | 3 | System identification (nonlinear least squares), validation | |
 | 4 | State estimation (Kalman filter), daily online use | |
@@ -35,8 +35,9 @@ p[k]    = p0 + k1*x1[k] - k2*x2[k]
 
 | Window | Role |
 |---|---|
-| Mar 2026 - 16 Aug 2026 | state initialisation (burn-in) |
-| 17 Aug 2026 - 19 Oct 2026 | identification / validation (incl. 10 km race, 27 Sep, 40:59) |
+| Nov 2025 - Feb 2026 | state initialisation (burn-in, unstructured running) |
+| Mar 2026 - 16 Aug 2026 | identification (incl. intentional summer break 1-16 Aug) |
+| 17 Aug 2026 - 19 Oct 2026 | identification / validation (structured plan, 10 km race 27 Sep, 40:59) |
 | 20 Oct 2026 - 22 Nov 2026 | online use, half marathon = final test |
 
 ## Repository structure
@@ -45,18 +46,27 @@ p[k]    = p0 + k1*x1[k] - k2*x2[k]
 config.m                 athlete and pipeline parameters
 startup_project.m        adds src/ to the path
 main_01_pipeline.m       phase 1 entry point
-src/io/                  FIT conversion and parsing
+src/io/                  FIT header screening, conversion and parsing
 src/load/                training-load metrics (TRIMP)
 data/raw/fit/            original FIT files        (NOT committed)
 data/interim/csv/        FIT -> CSV conversions    (NOT committed)
 data/processed/          daily datasets (.mat)     (NOT committed)
+explore/                 exploratory scripts (synthetic Banister model)
+notes/                   results log, literature notes
 results/                 figures, tables
 ```
 
 Raw data is never committed: activity files contain GPS tracks (home location).
 
+## Data so far
+
+114 runs (Nov 2025 - Oct 2026) from the full Garmin account export (20,413 FIT files,
+screened by header: only activity files are converted). Three intentional rest periods
+(late Dec, late Feb / early Mar, 1-16 Aug) provide natural zero-load segments.
+See `notes/results_log.md`.
+
 ## Requirements
 
 - MATLAB R2021a or newer
 - Java (MATLAB ships its own, a system `java` on the PATH is also fine)
-- `FitCSVTool.jar` from the [Garmin FIT SDK](https://developer.garmin.com/fit/download/), placed in `tools/`
+- `FitCSVTool.jar` from [garmin/fit-sdk-tools releases](https://github.com/garmin/fit-sdk-tools/releases), placed in `tools/`

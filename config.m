@@ -20,7 +20,11 @@ function cfg = config()
     cfg.athlete.sex    = 'M';   % TRIMP weighting coefficient depends on it
 
     % --- analysis windows ------------------------------------------------
-    cfg.dates.dataStart  = datetime(2026, 3, 1);
+    % dataStart: Nov 2025 -> Feb 2026 is pure burn-in for the model states
+    % (unstructured running, but load is load). The effect of the unknown
+    % initial state decays as exp(-t/tau1): ~6% after 4 months with tau1 = 42 d.
+    cfg.dates.dataStart  = datetime(2025, 11, 1);
+    cfg.dates.idStart    = datetime(2026, 3, 1);    % earliest date usable for identification
     cfg.dates.planStart  = datetime(2026, 8, 17);   % structured plan begins
     cfg.dates.race10k    = datetime(2026, 9, 27);
     cfg.dates.raceHalf   = datetime(2026, 11, 22);

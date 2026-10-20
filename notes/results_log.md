@@ -47,3 +47,43 @@ race weighs like a long run; with Garmin load it weighs ~2.5 long runs.
 
 **Caveat:** 4 sessions only. Repeat on the full dataset (scatter plot TRIMP vs
 Garmin load, coloured by intensity) when the Garmin export arrives.
+
+---
+
+## 2026-10-20 — Full Garmin export, Step 1 on complete data
+
+**Run:** `main_01_pipeline` on the full account export (20,413 FIT files).
+Header screening (`fit_file_info.m`): 569 activity files in total, 108 from
+01-Mar-2026; 90 runs between 2026-03-08 and 2026-10-18.
+
+**Data issues found and fixed**
+- 4 activities counted twice (manual "Export Original" + account export, different
+  file names, identical content) → deduplication by start time; manual copies removed.
+- Activity CSVs of ~3 KB (no records, e.g. manual entries) are discarded (<60 samples).
+
+**August 2026: intentional training break (athlete's note)**
+- 1–16 Aug: holiday, running stopped on purpose (yearly ~2-week summer break).
+  One unstructured "for fun" run in that window.
+- These are TRUE zeros of the input w[k], not missing data.
+- Modelling value: a natural step-down experiment. With no load, fitness and
+  fatigue decay freely → direct information on tau1 / tau2 (detraining),
+  rarely observable during normal training.
+
+**Data window extended backwards**
+- Running before March 2026 was unstructured but is still training load.
+- `cfg.dates.dataStart` moved to 2025-11-01 (burn-in of the states);
+  `cfg.dates.idStart` = 2026-03-01 (earliest date usable for identification).
+
+**Re-run after dedup + burn-in from Nov 2025 (same day)**
+- 565 activity files in total (569 − 4 manual duplicates), 167 from 2025-11-01;
+  **114 runs** between 2025-11-01 and 2026-10-18. Duplicates gone (race day back to TRIMP ≈ 142).
+- Figure `results/fig01_daily_load.png`, fixed-parameter proxies (tau = 42 d / 7 d):
+  - fitness proxy: ~0 (Nov 2025, burn-in) → ~15 (Mar) → peak ~39 (mid-July)
+    → drop during the August break (~24) → ~36 now;
+  - three natural "load-off" periods visible: late Dec 2025, late Feb / early Mar 2026,
+    1–16 Aug 2026. Each one is a free-decay segment useful for identifying tau1, tau2.
+- Open question: cause of the Dec and Feb/Mar breaks (holiday vs illness/injury).
+  Illness/injury would also affect performance directly, not only through the load.
+- These curves use literature time constants; NOT the identified model (Step 3).
+
+**Step 1 closed.**
