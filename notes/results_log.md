@@ -82,8 +82,9 @@ Header screening (`fit_file_info.m`): 569 activity files in total, 108 from
     → drop during the August break (~24) → ~36 now;
   - three natural "load-off" periods visible: late Dec 2025, late Feb / early Mar 2026,
     1–16 Aug 2026. Each one is a free-decay segment useful for identifying tau1, tau2.
-- Open question: cause of the Dec and Feb/Mar breaks (holiday vs illness/injury).
-  Illness/injury would also affect performance directly, not only through the load.
+- Cause of the breaks (athlete's note, 2026-10-20): all three (late Dec, late Feb/early Mar,
+  August) were INTENTIONAL rest periods, no illness or injury. They are clean zero-input
+  segments: performance changes there can be attributed to the load alone.
 - These curves use literature time constants; NOT the identified model (Step 3).
 
 **Step 1 closed.**
