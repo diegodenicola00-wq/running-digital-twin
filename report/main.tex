@@ -1,0 +1,220 @@
+% =====================================================================
+%  Running Digital Twin - technical report
+%  Diego De Nicola, Politecnico di Milano
+%
+%  Workflow: the text is drafted in Word (draft/report_draft.docx) and
+%  then moved here section by section. Equations, figures, tables and
+%  references are managed in this file.
+%  Compile with pdfLaTeX + BibTeX (Overleaf: default settings).
+% =====================================================================
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{siunitx}
+\usepackage[round,authoryear]{natbib}
+\usepackage{xcolor}
+\usepackage[colorlinks=true,linkcolor=blue!50!black,citecolor=blue!50!black,urlcolor=blue!50!black]{hyperref}
+
+\graphicspath{{figures/}}
+
+% Figure that compiles even if the image file is not there yet
+\newcommand{\safefig}[3][0.95\linewidth]{%
+  \IfFileExists{figures/#2}%
+    {\includegraphics[width=#1]{#2}}%
+    {\fbox{\parbox{#1}{\centering\vspace{2cm}\textit{Missing figure: \detokenize{#2}}\vspace{2cm}}}}%
+  \caption{#3}}
+
+% Placeholder for text still to be written
+\newcommand{\todo}[1]{\textcolor{red!70!black}{\textbf{[TODO:} #1\textbf{]}}}
+
+% Key numbers written by the MATLAB scripts (if available)
+\IfFileExists{generated/numbers.tex}{\input{generated/numbers.tex}}{}
+
+\title{Running Digital Twin:\\[4pt]
+\large System identification, state estimation and optimal planning\\
+of endurance-training adaptation from wearable data}
+\author{Diego De Nicola\\
+\small MSc Mechanical Engineering (Mechatronics and Robotics), Politecnico di Milano}
+\date{\todo{date}}
+
+\begin{document}
+\maketitle
+
+% ---------------------------------------------------------------------
+\begin{abstract}
+\todo{Write LAST, after the race (150--200 words): problem, data, methods
+(identification, Kalman filter, MPC), main quantitative results,
+pre-registered prediction vs actual half-marathon time.}
+\end{abstract}
+
+% ---------------------------------------------------------------------
+\section{Introduction}\label{sec:intro}
+% The athlete as a dynamic system. Why it is an engineering problem.
+% Goal of the project and case study (half marathon, 22 Nov 2026).
+% Contributions (bullet list at the end of the section).
+\todo{Introduction.}
+
+% ---------------------------------------------------------------------
+\section{Background and related work}\label{sec:background}
+% Impulse-response (fitness-fatigue) model: Banister 1975, Calvert 1976,
+% Morton 1990. Extensions and critique: Busso 1997/2003, Hellard 2006,
+% Turner 2017, PerPot (Perl 2001). Kalman filter applied to the model:
+% Kolossa 2017. Training load: Banister 1991, Impellizzeri 2019.
+
+The impulse-response model of \citet{calvert1976} describes performance as
+the difference between two first-order responses to the same training
+input. Discretised on a daily grid, with training load $w[k]$:
+\begin{align}
+x_1[k+1] &= e^{-1/\tau_1}\, x_1[k] + w[k] && \text{(fitness)}\label{eq:x1}\\
+x_2[k+1] &= e^{-1/\tau_2}\, x_2[k] + w[k] && \text{(fatigue)}\label{eq:x2}\\
+p[k]     &= p_0 + k_1 x_1[k] - k_2 x_2[k]  && \text{(performance)}\label{eq:p}
+\end{align}
+\todo{Background text.}
+
+% ---------------------------------------------------------------------
+\section{Data and instrumentation}\label{sec:data}
+% Devices (Vivoactive 4S until 2 Nov 2025, Instinct 2 Solar after; wrist
+% optical HR only). Garmin account export (20,413 FIT files), header
+% screening, FIT -> CSV, parsing, deduplication. Data windows (burn-in,
+% identification, online use). Validation of the pipeline against Garmin
+% summaries. The three intentional rest periods. Places (Milano, L'Aquila).
+\todo{Data and instrumentation.}
+
+\begin{table}[ht]
+\centering
+\caption{Data windows and their role.}\label{tab:windows}
+\begin{tabular}{@{}ll@{}}
+\toprule
+Window & Role \\
+\midrule
+Nov 2025 -- Feb 2026 & burn-in of the model states \\
+Mar 2026 -- 16 Aug 2026 & identification (incl.\ summer break 1--16 Aug) \\
+17 Aug 2026 -- 19 Oct 2026 & identification / validation (structured plan) \\
+20 Oct 2026 -- 22 Nov 2026 & online use; half marathon = final test \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ---------------------------------------------------------------------
+\section{Training load}\label{sec:load}
+% Banister TRIMP integrated second by second; HRrest = 45, HRmax = 200.
+% Comparison with Garmin training load (EPOC based): agreement below
+% threshold, divergence above. Daily load series and EWMA proxies.
+The training input is the Banister training impulse \citep{banister1991},
+integrated sample by sample from the 1\,Hz heart-rate record:
+\begin{equation}
+\mathrm{TRIMP} = \sum_i \frac{\Delta t_i}{60}\, \mathrm{HR_r}_{,i}\; a\, e^{\,b\, \mathrm{HR_r}_{,i}},
+\qquad
+\mathrm{HR_r} = \frac{\mathrm{HR}-\mathrm{HR_{rest}}}{\mathrm{HR_{max}}-\mathrm{HR_{rest}}},
+\label{eq:trimp}
+\end{equation}
+with $a=0.64$, $b=1.92$ (male coefficients).
+\todo{Training load text.}
+
+\begin{figure}[ht]
+\centering
+\safefig{fig01_daily_load.pdf}{Daily training load $w[k]$ (TRIMP) and
+exponentially weighted moving averages with literature time constants.}
+\label{fig:load}
+\end{figure}
+
+% ---------------------------------------------------------------------
+\section{Performance measurement}\label{sec:perf}
+% Aerobic efficiency on easy steady runs; grade adjustment (Minetti 2002);
+% analysis window 10-45 min; selection criteria and sensitivity analysis;
+% exclusion of treadmill runs; noise estimate (2.9 %); weather (Open-Meteo,
+% ERA5) and place covariates; no day-to-day heat effect; L'Aquila.
+Performance is measured by the aerobic efficiency of easy, steady runs,
+i.e.\ the grade-adjusted speed per net heartbeat:
+\begin{equation}
+\mathrm{EF} = \frac{\overline{v}_{\mathrm{GAP}}\;[\si{m/min}]}{\overline{\mathrm{HR}} - \mathrm{HR_{rest}}},
+\qquad
+v_{\mathrm{GAP}} = v\, \frac{C(i)}{C(0)},
+\label{eq:ef}
+\end{equation}
+where $C(i)$ is the energy cost of running on a gradient $i$
+\citep{minetti2002}. Weather data at the place and time of every run are
+taken from the Open-Meteo archive \citep{openmeteo2023} based on ERA5
+\citep{era5}.
+\todo{Performance measurement text.}
+
+\begin{table}[ht]
+\centering
+\caption{Sensitivity of the run selection to the steady-share threshold.}
+\label{tab:sensitivity}
+\begin{tabular}{@{}ccccc@{}}
+\toprule
+min.\ steady share & selected & L'Aquila & Jul--Sep & $\sigma$ [m/beat] \\
+\midrule
+0.60 & 57 & 12 & 10 & 0.046 \\
+0.70 & 57 & 12 & 10 & 0.046 \\
+0.80 & 55 & 10 &  9 & 0.046 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[ht]
+\centering
+\safefig{fig02_efficiency.pdf}{Aerobic efficiency of easy steady runs over
+time (raw and temperature-corrected running medians) and fitness proxy.}
+\label{fig:ef}
+\end{figure}
+
+\begin{figure}[ht]
+\centering
+\safefig[0.7\linewidth]{fig03_heat_effect.pdf}{EF residual with respect to
+a 9-run running median versus air temperature, by place.}
+\label{fig:heat}
+\end{figure}
+
+% ---------------------------------------------------------------------
+\section{System identification}\label{sec:id}
+% Step 3. Nonlinear least squares, initial state, identifiability,
+% validation, TRIMP vs Garmin load as input, joint temperature term.
+\todo{Step 3.}
+
+% ---------------------------------------------------------------------
+\section{State estimation}\label{sec:kf}
+% Step 4. State-space form, Kalman filter, measurement noise R estimated
+% by maximum likelihood, daily online use.
+\todo{Step 4.}
+
+% ---------------------------------------------------------------------
+\section{Optimal taper planning}\label{sec:mpc}
+% Step 5. MPC formulation, constraints, comparison with the actual plan
+% \citep{mujika2003}.
+\todo{Step 5.}
+
+% ---------------------------------------------------------------------
+\section{Pre-registered prediction and race result}\label{sec:race}
+% Prediction committed to the repository before 22 Nov 2026 (commit hash
+% and date), actual result, error analysis.
+\todo{After the race.}
+
+% ---------------------------------------------------------------------
+\section{Discussion and limitations}\label{sec:discussion}
+% Single athlete (n = 1); wrist optical HR; identifiability; seasonal
+% confounding (heat acclimatisation vs fatigue); selection of runs.
+\todo{Discussion.}
+
+% ---------------------------------------------------------------------
+\section{Conclusions and future work}\label{sec:conclusions}
+% Dynamic HR model per run (EF from all runs); chest-strap validation;
+% time-varying parameters.
+\todo{Conclusions.}
+
+% ---------------------------------------------------------------------
+\section*{Reproducibility}
+All code is available at \todo{GitHub URL}. Raw data are not published
+because activity files contain GPS tracks.
+
+\bibliographystyle{plainnat}
+\bibliography{references}
+
+\end{document}

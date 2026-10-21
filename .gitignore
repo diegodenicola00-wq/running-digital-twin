@@ -12,3 +12,18 @@ tools/*.jar
 *.asv
 *.m~
 slprj/
+
+# LaTeX build files (report/)
+*.aux
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.synctex.gz
+*.toc
+report/main.pdf
+
+# Word temporary files
+~$*.docx

@@ -107,4 +107,5 @@ title('Training input w[k]'); grid on
 
 exportgraphics(fig, fullfile(cfg.paths.results, 'fig01_daily_load.png'), ...
     'Resolution', 200);
+export_report_figure(fig, 'fig01_daily_load', cfg);
 fprintf('\nSaved: data/processed/*.mat, results/fig01_daily_load.png\n');

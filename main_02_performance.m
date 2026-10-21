@@ -176,6 +176,7 @@ title('Training load, EWMA (literature time constant, not identified)');
 linkaxes([ax1 ax2], 'x');
 xlim([cfg.dates.dataStart, max(D.day)]);
 exportgraphics(fig, fullfile(cfg.paths.results, 'fig02_efficiency.png'), 'Resolution', 200);
+export_report_figure(fig, 'fig02_efficiency', cfg);
 
 %% 7. Figure: heat effect
 fig3 = figure('Name', 'Heat effect', 'Position', [150 150 700 500]); hold on
@@ -194,5 +195,6 @@ ylabel('EF residual vs running median [m/beat]');
 title('Heat effect on aerobic efficiency (easy steady runs)');
 legend('Location', 'best'); grid on
 exportgraphics(fig3, fullfile(cfg.paths.results, 'fig03_heat_effect.png'), 'Resolution', 200);
+export_report_figure(fig3, 'fig03_heat_effect', cfg);
 
 fprintf('Saved: data/processed/performance.mat, results/fig02_efficiency.png, results/fig03_heat_effect.png\n');
