@@ -20,3 +20,13 @@ Extensions that are useful but not needed before the race.
 
 - Kalman measurement noise R estimated from the data (maximum likelihood on the
   filter innovations), which includes all noise sources, not only the sensor.
+
+## Performance index for hilly runs and intervals (dynamic HR model)
+
+- Problem (Step 2): HR lags behind changes of effort, so hilly runs and intervals look
+  "unsteady" and are excluded (only 12 of 39 L'Aquila runs used).
+- Idea: identify, run by run, a first-order dynamic model from grade-adjusted speed to HR:
+  HR(t) = HR0 + G · [1/(T s + 1)] · GAP(t)   (gain G, time constant T, per run)
+  The gain G (bpm per m/s) is the steady-state cost; EF ≈ 1/G uses EVERY run, not only
+  the steady ones. T itself may change with fitness (faster HR kinetics when fitter).
+- Nice link to the course material: per-run system identification (ARX / OE models).

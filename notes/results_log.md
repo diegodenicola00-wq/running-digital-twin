@@ -190,3 +190,24 @@ temperature at the place and mid-time of every run (Open-Meteo archive, ERA5).
 - Open: summer (Jul–Sep, L'Aquila) is poorly covered (10 of 39 L'Aquila runs selected),
   and that is exactly where the August break response lives → check minSteady
   sensitivity (0.6 / 0.7 / 0.8) and why L'Aquila runs are excluded.
+
+**Steady-share sensitivity and final choice (same day)**
+
+| minSteady | selected | L'Aquila | Jul–Sep | σ (21 pairs ≤ 3 d) |
+|---|---|---|---|---|
+| 0.60 | 57 | 12 | 10 | 0.046 |
+| 0.70 | 57 | 12 | 10 | 0.046 |
+| 0.80 | 55 | 10 | 9 | 0.046 |
+
+- L'Aquila runs excluded (26, criteria overlap): CV > max 22, steady share < min 24,
+  too intense 10. Hilly runs fail several criteria at once: on climbs HR rises above the
+  easy cap and GAP fluctuates. Relaxing one threshold recovers only 2 runs.
+- Root cause: HR responds to a change of effort with a lag (~tens of seconds), GAP changes
+  instantly → on rolling terrain a "steady effort" looks unsteady sample by sample.
+  → idea for later: per-run dynamic model HR(t) = HR0 + G·[first-order lag]·GAP(t),
+  EF ≈ 1/G (see notes/ideas_after_race.md).
+- **Choice: minSteady = 0.70** (middle of the flat region, same noise, +2 runs).
+
+**Step 2 closed.** Output for Step 3: `data/processed/performance.mat`, table P
+(57 easy steady runs: day, EF, temperature, place, altitude), σ = 0.046 m/beat (2.9 %).
+Temperature kept as a covariate to be re-tested jointly with the Banister model.

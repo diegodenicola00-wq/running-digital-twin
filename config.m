@@ -48,7 +48,7 @@ function cfg = config()
     cfg.perf.steadyTol = 0.15;  % [-]   steady sample: GAP within +-15% of the median
     % selection of runs used as performance measurements
     cfg.perf.maxCV     = 0.10;  % [-]   pace variability (intervals: CV > 0.2)
-    cfg.perf.minSteady = 0.80;  % [-]   share of steady samples in the window
+    cfg.perf.minSteady = 0.70;  % [-]   share of steady samples (0.6-0.7: same noise, +2 runs; see results_log)
     cfg.perf.maxHRR    = 0.75;  % [-]   HR-reserve fraction (easy runs; HR <= ~161 bpm)
     % heat effect (within-season comparison)
     cfg.perf.trendRuns = 9;     % [runs]  local running median removed before regressing on temperature
