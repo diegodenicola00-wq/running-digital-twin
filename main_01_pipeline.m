@@ -35,9 +35,14 @@ for i = 1:numel(files)
 
     [trimp, info] = trimp_banister(r.t, r.hr, cfg);
 
+    % start position: median of the first valid GPS fixes (NaN for treadmill)
+    iPos = find(~isnan(r.lat) & ~isnan(r.lon), 30);
+    lat0 = median(r.lat(iPos));  lon0 = median(r.lon(iPos));
+
     rows(end+1, :) = {act.file, tStart, day, info.duration/60, ...
         max(r.dist, [], 'omitnan')/1000, mean(r.hr, 'omitnan'), ...
-        max(r.hr, [], 'omitnan'), trimp, info.validFraction};   %#ok<SAGROW>
+        max(r.hr, [], 'omitnan'), trimp, info.validFraction, ...
+        lat0, lon0, median(r.alt, 'omitnan')};                   %#ok<SAGROW>
     recs{end+1, 1} = r;                                         %#ok<SAGROW>
 end
 
@@ -47,9 +52,18 @@ if isempty(rows)
 end
 
 A = cell2table(rows, 'VariableNames', {'file','start','day','dur_min', ...
-    'dist_km','hr_avg','hr_max','trimp','hr_valid'});
+    'dist_km','hr_avg','hr_max','trimp','hr_valid','lat','lon','alt_m'});
 A.rec = recs;
 A = sortrows(A, 'start');
+
+% Remove duplicates: the same activity can appear twice (e.g. exported by
+% hand AND contained in the account export, under different file names).
+[~, iu] = unique(A.start, 'stable');
+nDup = height(A) - numel(iu);
+if nDup > 0
+    fprintf('%d duplicate activities removed (same start time).\n', nDup);
+end
+A = A(iu, :);
 A = A(A.day >= cfg.dates.dataStart, :);
 
 fprintf('%d runs from %s to %s\n', height(A), ...

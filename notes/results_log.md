@@ -139,3 +139,54 @@ Noise estimate from 22 pairs ≤ 3 days apart: **σ = 0.062 m/beat (3.9 % of mea
   "unsteady" only because of traffic-light stops.
 - External sanity check: Garmin VO2max estimates from the export
   (DI-Connect-Fitness, summarizedActivities JSON).
+
+---
+
+## 2026-10-21 — Step 2: place and weather (Open-Meteo / ERA5)
+
+**Athlete's note:** runs from 3 Jul to 12 Sep 2026 (and other periods of the year) in
+L'Aquila: ~600–720 m a.s.l., hilly. Summer heat perceived as hard.
+
+**Data:** start GPS position of every run → place: Milano 72, L'Aquila 39, other 1
+(southern Greece), no GPS 2 (treadmill). Hourly temperature, humidity and apparent
+temperature at the place and mid-time of every run (Open-Meteo archive, ERA5).
+
+**Results (first run)**
+- Heat effect (EF residual vs 9-run running median, regressed on air temperature):
+  **−0.0000 m/beat per °C, SE 0.0010, n = 55** → no detectable day-to-day effect.
+  A plausible physiological effect (~0.004–0.008 m/beat per °C, i.e. a few bpm more
+  between cool and hot days) would be 4–8 SE away: the data do NOT support it at the
+  day-to-day scale. Same result with apparent temperature.
+- Place after the temperature term: L'Aquila +0.021 (n = 10), Milano −0.005 (n = 45)
+  m/beat → no penalty for altitude/terrain (GAP correction works); not significant
+  (SE ≈ 0.02).
+- Only 10 of 39 L'Aquila runs pass the selection (hills raise the CV).
+
+**Two problems found in the first version, fixed**
+- The 2 treadmill runs (no GPS: speed from the wrist accelerometer) were in the
+  selection: very likely the two low outliers in Jan–Feb (EF ≈ 1.36). Now excluded.
+- Raw vs corrected noise were computed on DIFFERENT pairs (NaN weather removed some):
+  σ 0.062 → 0.046 was an artefact, not an effect of the correction. Now same pairs.
+
+**Interpretation**
+- Day-to-day temperature does not explain the June–July EF dip. Remaining candidates:
+  accumulated fatigue (what Banister's k2·x2 term models) or a slow seasonal effect
+  (heat acclimatisation) that the running-median method cannot separate from fitness.
+- Method limitation: the running median absorbs slow seasonal effects; points at the
+  centre of the window get residual exactly 0. The rigorous test is in Step 3:
+  estimate Banister parameters and a temperature coefficient JOINTLY.
+
+**Added:** treadmill exclusion; sensitivity of the selection to maxCV (0.08–0.15).
+
+**Re-run with treadmill runs excluded (same day)**
+- 55 runs selected (2 treadmill runs removed).
+- Noise on the same 21 pairs ≤ 3 days: **σ = 0.046 m/beat (2.9 % of mean EF)**, raw and
+  temperature-corrected identical (slope ≈ 0). The earlier 3.9 % was inflated by the
+  two treadmill runs.
+- Signal (range of the running median ≈ ±7 %) vs noise 2.9 % per run → usable for Step 3.
+- maxCV sensitivity: 0.10 / 0.12 / 0.15 → 55 / 55 / 56 runs (flat region → robust);
+  0.08 → 42. The CV threshold is NOT the binding constraint: the "unsteady" exclusions
+  come from the steady-share criterion (minSteady = 0.80).
+- Open: summer (Jul–Sep, L'Aquila) is poorly covered (10 of 39 L'Aquila runs selected),
+  and that is exactly where the August break response lives → check minSteady
+  sensitivity (0.6 / 0.7 / 0.8) and why L'Aquila runs are excluded.

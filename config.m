@@ -50,4 +50,14 @@ function cfg = config()
     cfg.perf.maxCV     = 0.10;  % [-]   pace variability (intervals: CV > 0.2)
     cfg.perf.minSteady = 0.80;  % [-]   share of steady samples in the window
     cfg.perf.maxHRR    = 0.75;  % [-]   HR-reserve fraction (easy runs; HR <= ~161 bpm)
+    % heat effect (within-season comparison)
+    cfg.perf.trendRuns = 9;     % [runs]  local running median removed before regressing on temperature
+    cfg.perf.refTemp   = 15;    % [degC]  EF corrected to this reference temperature
+
+    % --- places where the athlete runs ------------------------------------------
+    % L'Aquila: ~600-720 m a.s.l., hilly; summer 2026 (3 Jul - 12 Sep) and other periods.
+    cfg.sites.name     = ["Milano", "L'Aquila"];
+    cfg.sites.lat      = [45.49, 42.35];
+    cfg.sites.lon      = [ 9.19, 13.40];
+    cfg.sites.radiusKm = 30;
 end

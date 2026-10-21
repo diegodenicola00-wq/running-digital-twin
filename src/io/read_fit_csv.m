@@ -14,12 +14,14 @@ function act = read_fit_csv(csvFile)
 %   act.subSport  sub-sport (e.g. treadmill)
 %   act.rec       table, one row per record sample:
 %                 t (datetime, UTC), hr [bpm], speed [m/s], dist [m],
-%                 alt [m], cad [rpm], power [W]
+%                 alt [m], cad [rpm], power [W], lat/lon [deg]
 
     FIT_EPOCH = 631065600;   % 1989-12-31 00:00 UTC, in Unix seconds
 
     recFields = {'timestamp','heart_rate','enhanced_speed','speed', ...
-                 'distance','enhanced_altitude','altitude','cadence','power'};
+                 'distance','enhanced_altitude','altitude','cadence','power', ...
+                 'position_lat','position_long'};
+    SEMI2DEG  = 180 / 2^31;  % FIT positions are stored in semicircles
 
     lines = splitlines(fileread(csvFile));
     lines = lines(startsWith(lines, 'Data,'));
@@ -70,7 +72,8 @@ function act = read_fit_csv(csvFile)
 
     act.rec = table(t, col('heart_rate'), speed, col('distance'), alt, ...
                     col('cadence'), col('power'), ...
-        'VariableNames', {'t','hr','speed','dist','alt','cad','power'});
+                    col('position_lat')*SEMI2DEG, col('position_long')*SEMI2DEG, ...
+        'VariableNames', {'t','hr','speed','dist','alt','cad','power','lat','lon'});
 
     [~, name, ext] = fileparts(csvFile);
     act.file = string([name ext]);
