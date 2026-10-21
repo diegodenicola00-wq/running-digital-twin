@@ -19,6 +19,12 @@ function cfg = config()
     cfg.athlete.timezone = 'Europe/Rome';   % used to assign runs to calendar days
     cfg.athlete.sex    = 'M';   % TRIMP weighting coefficient depends on it
 
+    % --- devices --------------------------------------------------------
+    % Wrist optical HR only (no chest strap ever used).
+    %   Garmin Vivoactive 4S       until 2025-11-02
+    %   Garmin Instinct 2 Solar    from  2025-11-03
+    cfg.device.change = datetime(2025, 11, 3);   % data before this: different sensor
+
     % --- analysis windows ------------------------------------------------
     % dataStart: Nov 2025 -> Feb 2026 is pure burn-in for the model states
     % (unstructured running, but load is load). The effect of the unknown
@@ -32,4 +38,16 @@ function cfg = config()
     % --- data cleaning -------------------------------------------------
     cfg.clean.hrMin   = 60;    % [bpm] samples below are treated as dropouts
     cfg.clean.maxGap  = 10;    % [s]   longer gaps are not integrated (pauses)
+
+    % --- performance index (Step 2) ----------------------------------------
+    % Thresholds chosen on a 19-run prototype (21 Oct 2026, notes/results_log.md).
+    cfg.perf.skipMin   = 10;    % [min] skip warm-up and optical-HR lag
+    cfg.perf.maxMin    = 45;    % [min] fixed window end -> comparable cardiac drift
+    cfg.perf.minWinMin = 15;    % [min] minimum usable window
+    cfg.perf.minSpeed  = 2.0;   % [m/s] below = walking / stopped
+    cfg.perf.steadyTol = 0.15;  % [-]   steady sample: GAP within +-15% of the median
+    % selection of runs used as performance measurements
+    cfg.perf.maxCV     = 0.10;  % [-]   pace variability (intervals: CV > 0.2)
+    cfg.perf.minSteady = 0.80;  % [-]   share of steady samples in the window
+    cfg.perf.maxHRR    = 0.75;  % [-]   HR-reserve fraction (easy runs; HR <= ~161 bpm)
 end

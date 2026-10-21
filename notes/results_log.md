@@ -88,3 +88,54 @@ Header screening (`fit_file_info.m`): 569 activity files in total, 108 from
 - These curves use literature time constants; NOT the identified model (Step 3).
 
 **Step 1 closed.**
+
+---
+
+## 2026-10-20 — Devices and sensor consistency
+
+- Garmin Vivoactive 4S until 2025-11-02; Garmin Instinct 2 Solar from 2025-11-03.
+  Never used a chest strap: HR is always wrist optical.
+- Consequence: the whole dataset from 2025-11-03 comes from ONE device →
+  no artificial jumps from a sensor change in HR, pace, cadence or power.
+  Only the run(s) on 1–2 Nov 2025 (burn-in window) come from the old watch: negligible.
+  If the data window is ever extended before Nov 2025, the device change must be handled.
+- Wrist optical HR caveats: lag at the start of hard efforts, possible cadence lock,
+  less reliable in short intervals. Steady easy runs are where it is most reliable
+  → design choice for Step 2: build the performance index from steady easy runs.
+- Stored in `config.m` as `cfg.device.change`.
+
+---
+
+## 2026-10-21 — Step 2, first run: aerobic efficiency index (EF)
+
+**Method:** EF = grade-adjusted speed [m/min] / (HR − HRrest) → metres per net beat.
+GAP via Minetti et al. (2002); window 10–45 min; 30 s smoothing; selection: CV ≤ 0.10,
+steady share ≥ 0.80, HR reserve ≤ 0.75. Thresholds chosen on a 19-run Python prototype.
+
+**Numbers:** 114 runs → 108 with a valid window → **57 selected** (easy + steady).
+Excluded: 6 too short, 44 unsteady, 7 too intense.
+Noise estimate from 22 pairs ≤ 3 days apart: **σ = 0.062 m/beat (3.9 % of mean EF)**.
+
+**What the EF series shows (5-run running median)**
+- Nov 2025 ~1.50 → Dec ~1.62 → Jan–Feb ~1.49 → Mar ~1.54 → May peak ~1.66
+  → June–July DOWN to ~1.55 → Sep peak ~1.71 → Oct ~1.62.
+- Range of the median ≈ ±7 % around the mean; noise ≈ 4 % per run → modest SNR.
+
+**Interpretation (open)**
+1. *Summer dip*: in June–July EF falls while the fitness proxy keeps rising (peak ~40).
+   Two candidate causes, both seasonal and therefore confounded:
+   - heat: higher HR at the same speed (thermoregulation, cardiovascular drift);
+   - accumulated fatigue: the fatigue proxy is at its maximum in July.
+2. *September peak right after the August break*: NOT necessarily in contradiction with
+   the model. Banister predicts p = k1·x1 − k2·x2: after a rest the fatigue is gone while
+   part of the fitness remains → performance can rise (taper / supercompensation).
+   EF must be compared with k1·x1 − k2·x2, not with fitness alone → Step 3.
+3. The watch records no temperature in the FIT records (checked: no `temperature`
+   field) → a temperature correction needs external weather data.
+
+**Next candidate actions**
+- Temperature covariate from historical weather (Milan, hourly) → EF corrected for heat.
+- Threshold sensitivity (e.g. maxCV 0.10 vs 0.12): many urban easy runs may be
+  "unsteady" only because of traffic-light stops.
+- External sanity check: Garmin VO2max estimates from the export
+  (DI-Connect-Fitness, summarizedActivities JSON).
