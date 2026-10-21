@@ -79,12 +79,54 @@ p[k]     &= p_0 + k_1 x_1[k] - k_2 x_2[k]  && \text{(performance)}\label{eq:p}
 
 % ---------------------------------------------------------------------
 \section{Data and instrumentation}\label{sec:data}
-% Devices (Vivoactive 4S until 2 Nov 2025, Instinct 2 Solar after; wrist
-% optical HR only). Garmin account export (20,413 FIT files), header
-% screening, FIT -> CSV, parsing, deduplication. Data windows (burn-in,
-% identification, online use). Validation of the pipeline against Garmin
-% summaries. The three intentional rest periods. Places (Milano, L'Aquila).
-\todo{Data and instrumentation.}
+
+\subsection{Devices and sensors}
+All data were recorded by the author during his own training with two Garmin
+smartwatches: a Vivoactive~4S until 2~November~2025 and an Instinct~2~Solar from
+3~November~2025 onwards. Heart rate (HR) was always measured by the optical
+sensor of the watch at the wrist; no chest strap was used. Since the device was
+replaced only two days after the start of the analysed period, the whole
+dataset comes in practice from a single device, and no artificial jumps due to a
+change of sensor are expected. All processing was implemented in MATLAB.
+
+\subsection{Data processing}
+The dataset is the complete export of the author's Garmin account, which
+contains 20{,}413 FIT files. Most of them are daily wellness records
+(activity monitoring, sleep, heart-rate variability). Activity files were
+identified by reading only the header of each file (the \texttt{file\_id}
+message), which reduced the files to be converted to 565 activities. These were
+converted to text with the FIT CSV Tool \citep{garminfit} and parsed into
+per-second records of HR, speed, distance, altitude and GPS position. After
+selecting the running activities, 114 runs between 1~November~2025 and
+18~October~2026 were retained.
+
+Three data-quality issues were handled. Activities appearing twice in the
+data (same start time, different file names) were removed. Activity files
+without per-second records, such as manually entered activities, were
+discarded. Finally, two runs were recorded on a treadmill: without GPS, their
+speed is estimated from the wrist accelerometer and is not comparable with that
+of outdoor runs. These two runs are kept in the training load, since their HR
+is measured as in any other run, but are excluded from the performance
+measurement (Section~\ref{sec:perf}). No run had less than \SI{90}{\percent} of
+usable HR samples.
+
+The pipeline was validated on four reference sessions (an easy run, an interval
+session, a long run and a \SI{10}{km} race): duration, distance and average HR
+computed from the per-second records match the activity summaries of Garmin
+Connect (Table~\ref{tab:loadcompare}).
+
+\subsection{Data windows}
+Fitness and fatigue are not measurable, and their value at the beginning of
+the data is unknown. The series therefore starts on 1~November~2025, four
+months before the first data used for identification (Table~\ref{tab:windows}).
+Since the effect of the unknown initial state decays as $e^{-t/\tau_1}$, with
+the literature value $\tau_1 \approx \SI{42}{days}$ it is reduced to about
+\SI{6}{\percent} after four months. Running in this period was not structured,
+but it is still training load and is used as input. From 17~August~2026 the
+author followed a structured plan towards a \SI{10}{km} race (27~September,
+40:59) and then towards a half marathon on 22~November~2026. During this last
+period the model is used online; it acts only as an advisor, and the training
+plan was not modified on the basis of its output.
 
 \begin{table}[ht]
 \centering
@@ -93,36 +135,104 @@ p[k]     &= p_0 + k_1 x_1[k] - k_2 x_2[k]  && \text{(performance)}\label{eq:p}
 \toprule
 Window & Role \\
 \midrule
-Nov 2025 -- Feb 2026 & burn-in of the model states \\
-Mar 2026 -- 16 Aug 2026 & identification (incl.\ summer break 1--16 Aug) \\
-17 Aug 2026 -- 19 Oct 2026 & identification / validation (structured plan) \\
-20 Oct 2026 -- 22 Nov 2026 & online use; half marathon = final test \\
+1 Nov 2025 -- 28 Feb 2026 & burn-in of the model states \\
+1 Mar 2026 -- 16 Aug 2026 & identification (incl.\ summer break 1--16 Aug) \\
+17 Aug 2026 -- 19 Oct 2026 & identification and validation (structured plan) \\
+20 Oct 2026 -- 22 Nov 2026 & online use; the half marathon is the final test \\
 \bottomrule
 \end{tabular}
 \end{table}
 
+\subsection{Rest periods and places}
+The data contain three rest periods: late December~2025, late February to
+early March~2026, and 1--16~August~2026. All three were intentional and not
+caused by illness or injury. For the model they are therefore true zeros of the
+input, not missing data: during them fitness and fatigue decay freely, which
+makes these segments natural step-down experiments and particularly
+informative about the two time constants.
+
+From the GPS position at the start of each run, the runs were assigned to two
+places: Milan (about \SIrange{120}{150}{m} above sea level, flat; 72~runs) and
+L'Aquila (about \SIrange{600}{720}{m} above sea level, hilly; 39~runs,
+including the whole summer from 3~July to 12~September~2026). The remaining
+runs are one run abroad and the two treadmill runs. The effect of place and
+weather on the performance measurement is analysed in Section~\ref{sec:perf}.
+
 % ---------------------------------------------------------------------
 \section{Training load}\label{sec:load}
-% Banister TRIMP integrated second by second; HRrest = 45, HRmax = 200.
-% Comparison with Garmin training load (EPOC based): agreement below
-% threshold, divergence above. Daily load series and EWMA proxies.
-The training input is the Banister training impulse \citep{banister1991},
-integrated sample by sample from the 1\,Hz heart-rate record:
+
+The input of the model, $w[k]$, is the daily training load, computed as the
+Banister training impulse \citep{banister1991}:
 \begin{equation}
 \mathrm{TRIMP} = \sum_i \frac{\Delta t_i}{60}\, \mathrm{HR_r}_{,i}\; a\, e^{\,b\, \mathrm{HR_r}_{,i}},
 \qquad
 \mathrm{HR_r} = \frac{\mathrm{HR}-\mathrm{HR_{rest}}}{\mathrm{HR_{max}}-\mathrm{HR_{rest}}},
 \label{eq:trimp}
 \end{equation}
-with $a=0.64$, $b=1.92$ (male coefficients).
-\todo{Training load text.}
+with $a=0.64$ and $b=1.92$ (male coefficients), $\Delta t_i$ in seconds.
+The resting HR, $\mathrm{HR_{rest}} = \SI{45}{bpm}$, is the seven-day average
+measured by the watch in October~2026; the maximum HR,
+$\mathrm{HR_{max}} = \SI{200}{bpm}$, is the highest reliable value recorded,
+reached during the \SI{10}{km} race.
+
+Because of the exponential weighting, TRIMP is a convex function of HR.
+Computed from the average HR of a session, it would therefore underestimate
+sessions in which HR varies widely, such as intervals and races. For this
+reason it is integrated sample by sample at \SI{1}{Hz}, skipping samples below
+\SI{60}{bpm} (sensor dropouts) and gaps longer than \SI{10}{s} (pauses). The
+daily load is the sum of the TRIMP of the runs of that day; rest days have
+$w[k]=0$.
+
+\begin{table}[ht]
+\centering
+\caption{Banister TRIMP and Garmin training load for the four reference
+sessions, ordered by intensity.}
+\label{tab:loadcompare}
+\begin{tabular}{@{}llccccc@{}}
+\toprule
+Date & Session & Duration & Avg HR & TRIMP & Garmin load & Garmin/TRIMP \\
+     &         & [min]    & [bpm]  &       &             &              \\
+\midrule
+13 Oct 2026 & easy run, \SI{9}{km}      & 53.4 & 145 &  77.8 &  79.8 & 1.03 \\
+18 Oct 2026 & long run, \SI{17}{km}     & 90.7 & 151 & 152.7 & 152.9 & 1.00 \\
+15 Oct 2026 & intervals, $4\times\SI{1}{km}$ & 53.0 & 149 &  88.2 & 168.5 & 1.91 \\
+27 Sep 2026 & \SI{10}{km} race          & 41.0 & 188 & 142.0 & 374.8 & 2.64 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Table~\ref{tab:loadcompare} compares TRIMP with the training load computed by
+Garmin, which is based on an estimate of the excess post-exercise oxygen
+consumption (EPOC). The two measures agree on aerobic runs (ratio close to~1)
+but diverge above the threshold, and the ratio grows with intensity, up to 2.6
+for the race. The interval session is the clearest case: its average HR is
+almost the same as that of the long run (149 versus \SI{151}{bpm}), yet Garmin
+assigns it about twice the load per minute, because it accounts for the peaks
+in the high-intensity zone. Neither measure is the \emph{true} load: they are
+two different hypotheses on how intensity is converted into a training
+stimulus. They are compared as model inputs in Section~\ref{sec:id}.
 
 \begin{figure}[ht]
 \centering
 \safefig{fig01_daily_load.pdf}{Daily training load $w[k]$ (TRIMP) and
-exponentially weighted moving averages with literature time constants.}
+exponentially weighted moving averages with the literature time constants
+of fitness ($\tau = \SI{42}{days}$) and fatigue ($\tau = \SI{7}{days}$).}
 \label{fig:load}
 \end{figure}
+
+Figure~\ref{fig:load} shows the daily load together with its exponentially
+weighted moving averages, computed with the literature time constants of
+fitness and fatigue. The fitness proxy starts from zero in November, as
+expected during the burn-in, and is already at about 15 in March. It peaks in
+July (about~39), drops during the August break (about~24) and is back to
+about~36 in mid-October. In each rest period the fatigue proxy decays within a
+few days, while the fitness proxy decays much more slowly. This is the
+two-time-constant behaviour of the model applied to the measured input, not
+yet a validation of the model: the curves are computed with literature
+parameters and are not compared with any measurement of performance. Measuring
+performance and identifying the parameters are the subject of
+Sections~\ref{sec:perf} and~\ref{sec:id}.
+
 
 % ---------------------------------------------------------------------
 \section{Performance measurement}\label{sec:perf}
