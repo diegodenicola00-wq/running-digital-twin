@@ -1,0 +1,128 @@
+% Sections 1-2 (Introduction, Background), written 21 Oct 2026.
+% NOT yet in main.tex: to be inserted together with Section 5.
+
+\section{Introduction}\label{sec:intro}
+
+Every runner who follows a training plan is, without knowing it, controlling a
+dynamic system. The input is the training done every day; the output is the
+performance on race day. In between there are two quantities that cannot be
+measured directly: the fitness built up over weeks and months, and the fatigue
+accumulated in the last few days. Hard training raises both. Fitness lasts
+long, fatigue goes away quickly, and the performance on a given day depends on
+the balance between the two. This is the reason why runners reduce their
+training in the last days before a race (the taper): fatigue disappears first,
+most of the fitness remains.
+
+Coaches manage this balance with experience. The idea of this project is to
+manage it as an engineer: write a model of the athlete, identify its
+parameters from data, estimate its hidden states and use it to plan the
+training. The athlete is the author, and the data are the ones recorded by his
+own sports watch during almost one year of running. The case study is the
+preparation of a half marathon on 22~November~2026: the system is used while
+the preparation is still running, and the race is its final test.
+
+The project follows the classical chain of a control problem:
+\begin{enumerate}
+  \item \textbf{Data and input.} A pipeline converts the raw files of the
+  watch into a daily training load, computed from heart rate second by second
+  (Sections~\ref{sec:data} and~\ref{sec:load}).
+  \item \textbf{Output.} Since races are rare, performance is measured on
+  ordinary training runs through an aerobic-efficiency index, whose noise is
+  quantified and whose dependence on weather and place is checked
+  (Section~\ref{sec:perf}).
+  \item \textbf{Identification.} The parameters of the fitness--fatigue model
+  are estimated from these data, taking advantage of three intentional rest
+  periods that act as natural step experiments (Section~\ref{sec:id}).
+  \item \textbf{State estimation.} A Kalman filter estimates fitness and
+  fatigue day by day as new runs are recorded (Section~\ref{sec:kf}).
+  \item \textbf{Planning.} Model predictive control computes the optimal
+  training load for the last weeks before the race, and the result is compared
+  with the plan actually followed (Section~\ref{sec:mpc}).
+  \item \textbf{Test.} The predicted race time is committed to the code
+  repository before the race, with a date that cannot be changed, and then
+  compared with the real result (Section~\ref{sec:race}).
+\end{enumerate}
+
+The last point is what makes the project a real test and not only a fit of
+past data: a model adapted after seeing the result can always be made to work,
+a prediction fixed in advance cannot. For the same reason, until the race the
+model is used only as an advisor, and the training plan is not changed on the
+basis of its output.
+
+% ---------------------------------------------------------------------
+\section{Background and related work}\label{sec:background}
+
+\subsection{The fitness--fatigue model}
+The first systems model of training was proposed by \citet{banister1975} and
+described in detail by \citet{calvert1976}. The athlete is treated as a linear
+system whose impulse response is the difference of two exponentials: a single
+training session produces a positive effect (fitness), large and slow, and a
+negative effect (fatigue), smaller in the long run but faster and initially
+stronger. Discretised on a daily grid, with training load $w[k]$, the model
+reads:
+\begin{align}
+x_1[k+1] &= e^{-1/\tau_1}\, x_1[k] + w[k] && \text{(fitness)}\label{eq:x1}\\
+x_2[k+1] &= e^{-1/\tau_2}\, x_2[k] + w[k] && \text{(fatigue)}\label{eq:x2}\\
+p[k]     &= p_0 + k_1 x_1[k] - k_2 x_2[k]  && \text{(performance)}\label{eq:p}
+\end{align}
+where $\tau_1 > \tau_2$ are the time constants in days, $k_1$ and $k_2$ the
+gains and $p_0$ the baseline performance. With the typical values of
+$\tau_1 \approx 40$ days and $\tau_2 \approx 7$ days, a single hard session
+first makes the athlete worse and only after some days better: this is the
+mechanism behind both recovery and taper.
+
+From the engineering point of view, the model is a linear time-invariant
+system with one input, two states and one output, and can be written in the
+standard state-space form
+\begin{equation}
+\mathbf{x}[k+1] = \mathbf{A}\,\mathbf{x}[k] + \mathbf{B}\,w[k], \qquad
+p[k] = \mathbf{C}\,\mathbf{x}[k] + p_0,
+\label{eq:ss}
+\end{equation}
+with $\mathbf{A} = \mathrm{diag}(e^{-1/\tau_1}, e^{-1/\tau_2})$,
+$\mathbf{B} = [1\;\;1]^{\mathsf T}$ and $\mathbf{C} = [k_1\;\;-k_2]$.
+This form is the reason why the model fits so naturally with the tools used in
+this project: identification, Kalman filtering and model predictive control
+all start from a state-space model.
+
+\subsection{Applications and limitations}
+\citet{morton1990} applied the model to running performance, and
+\citet{fitzclarke1991} used it to find how training sessions should be placed
+before a competition, which is the first example of planning based on the
+model. Later work focused on its limits. \citet{busso1997} estimated the
+parameters recursively, letting them change over time, and \citet{busso2003}
+showed that the fatigue response grows with the recent training load, so that
+the same session costs more when the athlete is already tired.
+\citet{hellard2006} analysed the model on elite athletes and found that its
+parameters are estimated with large uncertainty and are strongly correlated
+with each other, so that their values must be interpreted with care. Nonlinear
+alternatives have also been proposed, such as the PerPot model of
+\citet{perl2001} and the model of \citet{turner2017}, which was also used to
+optimise the training plan. A clear introduction to the whole topic, with
+worked examples, is given by \citet{clarke2013}.
+
+\citet{kolossa2017} combined the fitness--fatigue model with a Kalman filter,
+using new performance measurements to correct the state of the model as they
+become available. This is the closest work to the state-estimation part of the
+present project.
+
+\subsection{Measuring the training load}
+The input of the model must be a single number per day. \citet{banister1991}
+proposed the training impulse (TRIMP), which weights the duration of the
+exercise by the heart-rate reserve with an exponential factor, so that minutes
+at high intensity count more than minutes at low intensity. TRIMP is a
+measure of \emph{internal} load, i.e.\ of the response of the body, while
+distance and pace are measures of \emph{external} load \citep{impellizzeri2019}.
+For a model of the response of the athlete, the internal load is the natural
+input.
+
+\subsection{Position of this work}
+Most studies on the fitness--fatigue model use data collected in laboratory
+tests or races, on groups of athletes, and fit the model a posteriori. This
+project differs in three respects: it uses only the data of a consumer
+sports watch recorded during normal training; it measures performance on
+ordinary training runs, so that measurements are frequent; and it uses the
+model in real time during a preparation, with a prediction fixed before the
+race. The control tools themselves are standard and are taken from the
+textbooks of \citet{ljung1999} for identification, \citet{simon2006} for
+state estimation and \citet{rawlings2017} for model predictive control.
