@@ -292,6 +292,7 @@ $w[k]=0$.
 \caption{Banister TRIMP and Garmin training load for the four reference
 sessions, ordered by intensity.}
 \label{tab:loadcompare}
+\small
 \begin{tabular}{@{}llccccc@{}}
 \toprule
 Date & Session & Duration & Avg HR & TRIMP & Garmin load & Garmin/TRIMP \\
@@ -340,27 +341,75 @@ Sections~\ref{sec:perf} and~\ref{sec:id}.
 
 % ---------------------------------------------------------------------
 \section{Performance measurement}\label{sec:perf}
-% Aerobic efficiency on easy steady runs; grade adjustment (Minetti 2002);
-% analysis window 10-45 min; selection criteria and sensitivity analysis;
-% exclusion of treadmill runs; noise estimate (2.9 %); weather (Open-Meteo,
-% ERA5) and place covariates; no day-to-day heat effect; L'Aquila.
-Performance is measured by the aerobic efficiency of easy, steady runs,
-i.e.\ the grade-adjusted speed per net heartbeat:
+
+The model needs a measurement of performance, and races alone are not enough:
+in one year there were only a few of them, while the time constants of the
+model are of the order of days and weeks. Performance is therefore measured on
+ordinary training runs, which are frequent. The price to pay is that a
+training run is not a maximal effort, so the measure must be built carefully
+and its noise must be known.
+
+\subsection{Aerobic-efficiency index}
+At submaximal intensity, running speed (which is roughly proportional to the
+oxygen uptake) grows almost linearly with the heart rate above rest. An athlete
+who gets fitter runs faster for the same number of heartbeats. The index used
+here, derived from the efficiency factor of \citet{allen2019}, is the
+grade-adjusted speed per net heartbeat:
 \begin{equation}
 \mathrm{EF} = \frac{\overline{v}_{\mathrm{GAP}}\;[\si{m/min}]}{\overline{\mathrm{HR}} - \mathrm{HR_{rest}}},
 \qquad
 v_{\mathrm{GAP}} = v\, \frac{C(i)}{C(0)},
 \label{eq:ef}
 \end{equation}
-where $C(i)$ is the energy cost of running on a gradient $i$
-\citep{minetti2002}. Weather data at the place and time of every run are
-taken from the Open-Meteo archive \citep{openmeteo2023} based on ERA5
-\citep{era5}.
-\todo{Performance measurement text.}
+measured in metres per net beat. The grade-adjusted speed $v_{\mathrm{GAP}}$
+converts the speed on a gradient $i$ into the equivalent speed on the flat,
+using the energy cost of running $C(i)$ measured by \citet{minetti2002}. On the
+author's easy runs EF is between about 1.5 and \SI{1.7}{m/beat}: for example,
+\SI{10}{km/h} at \SI{147}{bpm} gives $167/(147-45) \approx 1.64$.
+
+Each run is resampled at \SI{1}{Hz}; speed, HR, distance and altitude are
+smoothed with a \SI{30}{s} moving average, and the gradient is computed from
+the smoothed altitude and distance and limited to $\pm\SI{15}{\percent}$. EF is
+computed on a fixed window, from minute 10 to minute 45 of each run. The first
+ten minutes are skipped because HR is still rising (warm-up) and the optical
+sensor responds with a delay; the fixed end makes runs of different length
+comparable, since in long runs HR drifts upwards even at constant pace
+(cardiac drift). Within the window only running samples are used (speed above
+\SI{2}{m/s}), and only the \emph{steady} ones, i.e.\ those whose $v_{\mathrm{GAP}}$
+is within $\pm\SI{15}{\percent}$ of the median of the window.
+
+\subsection{Selection of the runs}
+Not every run is a good measurement. A run is used only if it is easy and
+steady:
+\begin{itemize}
+  \item the coefficient of variation of the \SI{60}{s}-averaged
+  $v_{\mathrm{GAP}}$ in the window is at most 0.10;
+  \item at least \SI{70}{\percent} of the window is steady;
+  \item the average HR reserve is at most 0.75 (HR up to about \SI{161}{bpm}).
+\end{itemize}
+The reason is physiological as well as instrumental. During intervals HR
+cannot follow the changes of speed, and the optical sensor even less: speed
+rises immediately, HR only after tens of seconds, so the index is artificially
+inflated (up to about \SI{2.0}{m/beat} in interval sessions, against 1.5--1.7
+on easy runs). Races are steady but close to maximal, where the relation
+between speed and HR is no longer linear. The two treadmill runs are also
+excluded, since their speed comes from the wrist accelerometer and not from
+GPS.
+
+The thresholds were first chosen on a sample of 19 runs and then checked with a
+sensitivity analysis on the whole dataset. Out of 114 runs, 108 have a valid
+analysis window and \textbf{57} pass the selection. With the coefficient of
+variation limited to 0.10, 0.12 or 0.15 the selected runs are 55, 55 and 56,
+while a stricter limit of 0.08 leaves only 42: the chosen value lies in a flat
+region, so the result does not depend on its exact value. The binding criterion
+is the share of steady samples. Table~\ref{tab:sensitivity} shows that lowering
+it from 0.80 to 0.70 recovers two runs without changing the noise, which is
+why 0.70 was chosen; lowering it further brings nothing more.
 
 \begin{table}[ht]
 \centering
-\caption{Sensitivity of the run selection to the steady-share threshold.}
+\caption{Sensitivity of the run selection to the steady-share threshold
+(noise estimated on the same 21 pairs of runs).}
 \label{tab:sensitivity}
 \begin{tabular}{@{}ccccc@{}}
 \toprule
@@ -373,19 +422,80 @@ min.\ steady share & selected & L'Aquila & Jul--Sep & $\sigma$ [m/beat] \\
 \end{tabular}
 \end{table}
 
+The main weakness of the selection is the summer. Only 12 of the 39 runs in
+L'Aquila are used: on hilly terrain the grade-adjusted speed changes
+continuously, while HR follows with a delay, so even an easy run at constant
+effort looks unsteady sample by sample. As a consequence the period from July
+to September, which contains the August break, has only ten measurements.
+
+\subsection{Measurement noise}
+Fitness cannot change appreciably in a few days. The difference between two
+selected runs at most three days apart is therefore mostly measurement noise,
+and the noise of a single run is estimated as
+$\sigma = \mathrm{std}(\Delta \mathrm{EF})/\sqrt{2}$. From 21 such pairs,
+$\sigma = \SI{0.046}{m/beat}$, i.e.\ \SI{2.9}{\percent} of the mean EF. A first
+estimate gave \SI{3.9}{\percent}; the difference came entirely from the two
+treadmill runs, which were then excluded.
+
+Figure~\ref{fig:ef} shows the selected runs over time. The 5-run running median
+goes from about 1.50 in November~2025 to 1.62 in December, back to 1.49 in
+January--February, up to 1.66 in May, down to 1.55 in June--July, up to its
+maximum of 1.71 in September and to about 1.62 in October. The range of the
+median, about $\pm\SI{7}{\percent}$, is 2--3 times the noise of a single run:
+the signal is clearly visible, but a single run says little, which is one of
+the reasons for using a Kalman filter (Section~\ref{sec:kf}).
+
 \begin{figure}[ht]
 \centering
-\safefig{fig02_efficiency.pdf}{Aerobic efficiency of easy steady runs over
-time (raw and temperature-corrected running medians) and fitness proxy.}
+\safefig{fig02_efficiency.pdf}{Aerobic efficiency of the selected runs over
+time (Milan and L'Aquila), 5-run running medians of the raw and of the
+temperature-corrected EF, and fitness proxy with the literature time constant.}
 \label{fig:ef}
 \end{figure}
+
+Two features of the series deserve attention. The maximum in September comes
+right after the August break, when the training load had been zero for two
+weeks. This is not in contradiction with the model: in Equation~\eqref{eq:p}
+performance is fitness \emph{minus} fatigue, and after a rest fatigue has
+disappeared while most of the fitness is still there, which is the same
+mechanism as the taper. The second feature is the drop in June and July, when
+the fitness proxy keeps rising. Two explanations are possible, both seasonal:
+the heat, which raises HR at the same speed \citep{gonzalezalonso1999}, and the
+fatigue accumulated in the period of highest training load.
+
+\subsection{Effect of weather and place}
+To separate the two explanations, the air temperature at the place and time of
+every run was taken from the Open-Meteo archive \citep{openmeteo2023}, which is
+based on the ERA5 reanalysis \citep{era5}: the hourly values at the start
+coordinates of the run are interpolated at its mid-time. Slow changes of
+fitness were removed by subtracting from each EF a 9-run running median, and
+the residuals were regressed on temperature. The slope is
+$-0.0001 \pm \SI{0.0011}{m/beat}$ per \si{\degreeCelsius} (57~runs), with
+temperatures from about 2 to \SI{36}{\celsius} (Figure~\ref{fig:heat}). A
+physiologically plausible effect, a few beats per minute more between a cool
+and a hot day, would correspond to about $-0.004$ to $-0.008$ and would be 4 to
+8 standard errors away: at the scale of single days, the data show no effect
+of temperature. The result is the same with the apparent temperature, which
+also accounts for humidity and wind. After the temperature term, the runs in
+L'Aquila are not worse than those in Milan (mean residuals of about $+0.02$ and
+$0.00$, within one standard error): the grade adjustment works, and an
+altitude of 600--\SI{720}{m} is too low to have a visible effect.
 
 \begin{figure}[ht]
 \centering
 \safefig[0.7\linewidth]{fig03_heat_effect.pdf}{EF residual with respect to
-a 9-run running median versus air temperature, by place.}
+a 9-run running median versus air temperature during the run, by place.}
 \label{fig:heat}
 \end{figure}
+
+This method has a limitation. The running median removes everything that
+changes slowly, and therefore also a seasonal effect of heat, such as the
+gradual acclimatisation over several weeks. The drop of June and July thus
+remains open. The proper test is to estimate the parameters of the
+fitness--fatigue model and a temperature coefficient \emph{together}, and to
+check whether the model alone, through its fatigue term, explains the drop.
+This is done in Section~\ref{sec:id}.
+
 
 % ---------------------------------------------------------------------
 \section{System identification}\label{sec:id}
