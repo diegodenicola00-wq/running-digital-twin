@@ -499,9 +499,158 @@ This is done in Section~\ref{sec:id}.
 
 % ---------------------------------------------------------------------
 \section{System identification}\label{sec:id}
-% Step 3. Nonlinear least squares, initial state, identifiability,
-% validation, TRIMP vs Garmin load as input, joint temperature term.
-\todo{Step 3.}
+
+This section tries to answer the central question of the project: can the
+parameters of the fitness--fatigue model be estimated from the author's own
+training data? The short answer is no, and the interesting part is why.
+
+\subsection{Method}
+The model of Equations~\eqref{eq:x1}--\eqref{eq:p} has five parameters. It is
+nonlinear in the two time constants $\tau_1, \tau_2$ but \emph{linear} in the
+gains $p_0, k_1, k_2$. This structure is exploited with variable projection:
+for every pair $(\tau_1,\tau_2)$ on a grid, the two states are computed from the
+daily load and the three gains are found by linear least squares, which has an
+exact solution. The pair with the lowest residual sum of squares (RSS) is the
+estimate. The grid covers $\tau_1$ from 5 to 150~days and $\tau_2$ from 1 to
+40~days, with $\tau_2 < \tau_1$. Compared with a generic nonlinear optimiser,
+this approach finds the global minimum on the grid, needs no starting point,
+and produces the whole map of the residuals, which is the most direct way to
+see whether the parameters are identifiable.
+
+The states are computed from 1~November~2025 (burn-in), and only the
+measurements from 1~March~2026 are used in the fit. The quality of the fit is
+judged in three ways: the coefficient of determination $R^2$; the Akaike
+information criterion (AIC), compared with that of a constant model that always
+predicts the mean; and an approximate 95\,\% joint confidence region of the time
+constants, i.e.\ the pairs whose RSS does not exceed
+$\mathrm{RSS}_{\min}\,[1 + \tfrac{2}{n-5}F_{0.95}(2, n-5)]$. Finally, the model
+is validated by fitting it up to 16~August and predicting the period from
+17~August to 18~October, which it has never seen.
+
+\subsection{Fit on the steady-run efficiency}
+On the 43 measurements of the steady-run EF (Section~\ref{sec:perf}) the result
+is negative. The best fit lies on the edge of the grid ($\tau_1 = \SI{150}{days}$,
+$\tau_2 = \SI{2.5}{days}$) and has a negative fatigue gain, which has no
+physical meaning. The model explains only \SI{9}{\percent} of the variance
+($R^2 = 0.086$), and the AIC of the constant model is lower ($-240.4$ against
+$-236.3$): adding fitness and fatigue makes the description worse, not better,
+once the number of parameters is taken into account. In validation the error
+of the model is the same as that of the mean of the training data
+(\SI{0.0666}{} against \SI{0.0671}{m/beat}).
+
+\begin{figure}[ht]
+\centering
+\safefig[0.75\linewidth]{fig04_cost_map.pdf}{Residual map of the Banister fit on
+the steady-run EF: increase of the residual sum of squares with respect to the
+best fit, as a function of the two time constants. The whole grid is within
+\SI{5.9}{\percent} of the best fit and inside the 95\,\% confidence region.}
+\label{fig:costmap}
+\end{figure}
+
+Figure~\ref{fig:costmap} shows why. Over the whole grid, from (5, 1) to
+(150, 40) days, the residual is never more than \SI{5.9}{\percent} above the
+minimum, and the 95\,\% confidence region covers the entire grid. The literature
+values (42, 7) are only \SI{3.4}{\percent} worse than the best fit. In other
+words, the data are equally well (or equally badly) described by almost any
+pair of time constants: the parameters are not identifiable. This is the
+problem described by \citet{hellard2006}, here in its most extreme form. The
+main reason is the ratio between signal and noise: from March the true
+variations of the EF are of the same order as the noise of a single
+measurement (\SI{2.9}{\percent}, Section~\ref{sec:perf}), and there are only 43
+measurements for five parameters.
+
+\subsection{A better measurement: dynamic efficiency of every run}
+Since the steady-run EF discards half of the runs, including the summer and
+the hard sessions, a second index was built that uses every run. Heart rate is
+modelled as the delayed response to the grade-adjusted speed,
+\begin{equation}
+\mathrm{HR}(t) = c_r + \frac{G}{T_{\mathrm{HR}}\, s + 1}\, v_{\mathrm{GAP}}(t) + d\, t,
+\label{eq:hrdyn}
+\end{equation}
+where the gain $G$, the time constant $T_{\mathrm{HR}}$ and the drift $d$
+describe the physiology and are shared by all runs, while each run $r$ has its
+own offset $c_r$. A separate model for every run was tried first, but on easy
+runs the speed varies too little and $G$ and $T_{\mathrm{HR}}$ cannot be
+estimated. The shared parameters are estimated once on 109 runs (treadmill runs
+and near-maximal efforts excluded), with a grid on $T_{\mathrm{HR}}$ and least squares for $G$
+and $d$: $T_{\mathrm{HR}} = \SI{80}{s}$, $G = \SI{21.9}{bpm}$ per \si{m/s}
+(about \SI{6}{bpm} for every km/h), $d = \SI{12.8}{bpm/h}$, with a residual of
+\SI{7.3}{bpm} (3--5 on easy runs, up to 16 in interval sessions). From the
+offset of each run, the HR predicted at \SI{10.8}{km/h} at minute~20 gives a
+\emph{dynamic EF}, defined as in Equation~\eqref{eq:ef}.
+
+\begin{figure}[ht]
+\centering
+\safefig{fig05_dynamic_ef.pdf}{Dynamic EF of all runs (pooled HR model) and
+steady-run EF of Section~\ref{sec:perf}.}
+\label{fig:dynef}
+\end{figure}
+
+The dynamic EF covers 109 runs instead of 57, including the summer
+(Figure~\ref{fig:dynef}), but it is noisier: \SI{4.7}{\percent} per run,
+estimated from 89 pairs of runs at most three days apart. The Banister fit on it
+(81 days with measurements from March) is again not identifiable: best
+$\tau_1 = 18$ and $\tau_2 = \SI{17.5}{days}$, both gains negative, $R^2 = 0.11$,
+AIC practically equal to that of the constant model ($-398.9$ against
+$-397.8$), and the 95\,\% region still covers the whole grid. In validation the
+model is \emph{worse} than the mean (\SI{0.106}{} against \SI{0.087}{m/beat}).
+
+\subsection{The sign of fatigue}
+The negative gains suggested a further test. The time constants were fixed at
+literature values and only the gains were estimated, so that the significance
+and the sign of each state can be read from its $t$-statistic
+(Table~\ref{tab:tstat}). With the steady-run EF neither state is significant
+from March. With the dynamic EF, the fatigue state is significant
+($t \approx +2.2$ to $+2.8$) but with the \emph{opposite} sign to the model: after
+periods of high load, the HR at a given speed is \emph{lower}, so the index
+improves. The result does not depend on the exact time constants.
+
+\begin{table}[ht]
+\centering
+\caption{$t$-statistics of the two states with fixed time constants.
+A positive value for fatigue means that recent load \emph{raises} the index,
+the opposite of what the model assumes.}
+\label{tab:tstat}
+\small
+\begin{tabular}{@{}llcccc@{}}
+\toprule
+ & & \multicolumn{2}{c}{all data} & \multicolumn{2}{c}{from March} \\
+\cmidrule(lr){3-4}\cmidrule(lr){5-6}
+Index & $(\tau_1,\tau_2)$ [days] & fitness & fatigue & fitness & fatigue \\
+\midrule
+steady-run EF & (42, 7)  & $+2.1$ & $+0.4$ & $+0.1$ & $+0.8$ \\
+              & (42, 3)  & $+2.8$ & $+0.3$ & $+0.4$ & $+1.0$ \\
+              & (60, 10) & $+2.2$ & $+0.4$ & $+0.5$ & $+0.5$ \\
+dynamic EF    & (42, 7)  & $+0.1$ & $\mathbf{+2.8}$ & $-0.6$ & $\mathbf{+2.2}$ \\
+              & (42, 3)  & $+1.1$ & $\mathbf{+2.6}$ & $+0.1$ & $+1.9$ \\
+              & (60, 10) & $+0.1$ & $\mathbf{+2.7}$ & $-0.6$ & $\mathbf{+2.2}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+This is consistent with the literature on over-reaching: in a systematic review,
+\citet{bosquet2008} found that submaximal HR decreases slightly, by 1 to
+\SI{6}{bpm}, after periods of overload. An index built on the HR at a
+submaximal speed therefore cannot distinguish fatigue from fitness, because both
+lower the HR at a given speed. The fitness--fatigue model, on the other hand,
+assumes that fatigue reduces performance, and in the original work performance
+is measured on maximal efforts. The failure of the identification is thus not
+only a matter of noise: \textbf{HR-based submaximal indices are structurally
+unsuitable as the output of this model}, and no refinement of the same kind of
+index can solve the problem.
+
+\subsection{Consequences for the rest of the project}
+Since the time constants cannot be estimated, the following sections use the
+literature values $\tau_1 = \SI{42}{days}$ and $\tau_2 = \SI{7}{days}$ as a
+structural assumption, stated as such. The state estimation of
+Section~\ref{sec:kf} still uses the dynamic EF as a measurement, but with an
+empirical measurement equation in which fatigue raises the index, as found
+above. The planning of Section~\ref{sec:mpc} works on the literature model. The
+race prediction of Section~\ref{sec:race} is anchored on the only race of the
+period, the \SI{10}{km} of 27~September: with a single anchor, the absolute
+gains cannot be estimated, so the prediction is a calibrated extrapolation and
+not the output of an identified model.
+
 
 % ---------------------------------------------------------------------
 \section{State estimation}\label{sec:kf}
