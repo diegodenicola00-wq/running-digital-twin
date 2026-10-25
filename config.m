@@ -60,4 +60,17 @@ function cfg = config()
     cfg.sites.lat      = [45.49, 42.35];
     cfg.sites.lon      = [ 9.19, 13.40];
     cfg.sites.radiusKm = 30;
+
+    % --- identification (Step 3) -------------------------------------------------
+    cfg.id.tau1Grid = 5:1:150;                    % [days] fitness time constant grid
+    cfg.id.tau2Grid = 1:0.5:40;                   % [days] fatigue time constant grid
+    cfg.id.valStart = datetime(2026, 8, 17);      % validation: fit before, predict after
+
+    % --- dynamic EF: pooled first-order HR model (Step 3) ---------------------------
+    cfg.dyn.skipSec    = 180;                     % [s]   skip the first minutes of each run
+    cfg.dyn.minSamples = 600;                     % [s]   minimum usable samples per run
+    cfg.dyn.maxMeanHR  = 175;                     % [bpm] runs above: near-maximal, excluded
+    cfg.dyn.Tgrid      = [30 40 50 60 70 80 100]; % [s]   grid of the HR time constant
+    cfg.dyn.vRef       = 3.0;                     % [m/s] reference speed (10.8 km/h)
+    cfg.dyn.tRefMin    = 20;                      % [min] reference time (for the drift)
 end

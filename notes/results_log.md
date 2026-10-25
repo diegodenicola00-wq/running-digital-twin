@@ -211,3 +211,108 @@ temperature at the place and mid-time of every run (Open-Meteo archive, ERA5).
 **Step 2 closed.** Output for Step 3: `data/processed/performance.mat`, table P
 (57 easy steady runs: day, EF, temperature, place, altitude), σ = 0.046 m/beat (2.9 %).
 Temperature kept as a covariate to be re-tested jointly with the Banister model.
+
+---
+
+## 2026-10-25 — Step 3, session 1: first identification (Python prototype)
+
+**Data:** daily TRIMP from 2025-11-01 (burn-in), EF of the 57 selected runs;
+identification on the 43 measurements from 2026-03-01.
+**Method:** variable projection — grid over tau1 (5–150 d) and tau2 (1–40 d), for each
+pair the gains (p0, k1, k2) by linear least squares; global minimum of the RSS.
+
+**Results: the fitness–fatigue model does NOT explain the EF series**
+- Best fit at the edges of the grid (tau1 = 150 d, tau2 = 2.5 d), k2 < 0 (unphysical);
+  RMSE 0.057 vs 0.060 of a constant model; R2 = 0.09.
+- 95 % confidence region covers the whole grid (tau1 5–150, tau2 1–40): parameters
+  not identifiable at all.
+- AIC: constant model (−240.4) ≥ fitness-only (−239.4) > full Banister (−236.3).
+- With non-negative gains: R2 = 0.08 (Mar+), 0.26 using all data from Nov (only a slow
+  trend, tau at the upper bound).
+- Literature time constants (42 / 7 d), gains fitted: R2 = 0.06 (Mar+), fitness and
+  fatigue terms not significant (t = 0.1 and −0.8).
+- Validation (fit Mar–16 Aug, predict 17 Aug–18 Oct, 14 points): RMSE 0.067 vs 0.067
+  of the training mean → no predictive skill.
+
+**Why (diagnosis)**
+- Signal-to-noise: from March the EF varies with std 0.060; measurement noise 0.046
+  → true signal std ≈ 0.038 (≈ 2.4 %), i.e. SNR ≈ 1 per run, with 43 runs and
+  5 parameters.
+- The variation that exists is mostly SEASONAL: monthly mean EF is low in winter
+  (Jan 1.42, Feb 1.52, ~8–10 °C), high in spring/autumn (1.62–1.67), lower in June (1.58, 29 °C).
+  EF vs raw temperature: quadratic, R2 = 0.34 (all data), vertex ≈ 23 °C;
+  t-stats ≈ 4–5. But the day-to-day analysis (Step 2) found NO temperature effect →
+  the seasonal correlation is confounded with season / fitness, not a proven causal effect.
+- EF (submaximal efficiency) may simply be weakly sensitive to short-term fatigue,
+  which in Banister's original work is measured on maximal performance.
+
+**Status:** open decision on how to proceed (better output measure, fixed time
+constants with priors, or different performance metric). See next entry.
+
+---
+
+## 2026-10-25 — Step 3, session 1b: dynamic HR index on ALL runs (Python prototype)
+
+**Idea:** instead of selecting steady runs, model HR as the first-order response to
+grade-adjusted speed: HR(t) = c_run + G·[1/(T s+1)]·v_GAP(t) + d·t.
+G, T, d shared by all runs (same physiology), offset c_run per run → HR predicted at
+3.0 m/s (10.8 km/h) at minute 20 → "dynamic EF" = 180 / (HR_ref − HRrest).
+
+**Data:** per-second export of all runs (`data/processed/runs_1hz.csv`), 114 runs;
+excluded 2 treadmill runs and 2 near-maximal runs (mean HR ≥ 175: races).
+
+**Pooled HR model (109 runs):** T = 80 s, G = 21.9 bpm per m/s (≈ 6 bpm per km/h),
+drift 12.8 bpm/h, RMSE 7.3 bpm (easy runs 3–5 bpm, intervals 9–16 bpm).
+A free model per run is NOT identifiable on easy runs (narrow speed range → G, T at bounds).
+
+**Dynamic EF:** 109 runs (vs 57), summer covered (Jul 11 runs, Aug 7, Sep 11).
+Noise from 89 pairs ≤ 3 days: σ = 0.077 (4.7 %) vs 2.9 % of the steady-run EF;
+total std 0.087 → signal std ≈ 0.040 (similar to the steady EF).
+
+**Banister identification on the dynamic EF:** again NOT identifiable.
+- Mar+ (81 days): R2 = 0.11, best tau1 = 18, tau2 = 17.5, both gains NEGATIVE;
+  95 % region = whole grid. AIC full −399.1 vs constant −397.9 (no real gain).
+- Validation (fit Mar–16 Aug, predict 17 Aug–18 Oct): RMSE 0.104 vs 0.087 of the
+  training mean → WORSE than a constant.
+
+**Key finding: the fatigue term has the WRONG sign, consistently**
+With literature time constants fixed, t-statistics of the two states:
+
+| series | tau | window | t(fitness) | t(fatigue state; + = raises EF) |
+|---|---|---|---|---|
+| steady EF (57) | 42/7 | all / Mar+ | +2.1 / +0.1 | +0.4 / +0.8 |
+| dynamic EF (107 days) | 42/7 | all / Mar+ | +0.1 / −0.6 | **+2.8 / +2.2** |
+| dynamic EF | 42/3 , 60/10 | all | +1.1 , +0.1 | **+2.6 , +2.7** |
+
+Recent training load RAISES the HR-based efficiency: after heavy training, HR at a
+given speed is LOWER. This is consistent with the literature on over-reaching:
+Bosquet et al. (2008, BJSM 42(9)) — submaximal HR decreases slightly with
+over-reaching (1–6 bpm with > 2 weeks of overload), within day-to-day variability.
+→ An HR-based submaximal index confounds fatigue with fitness: both lower the HR
+at a given speed. It cannot serve as the output p[k] of Banister's model, whose
+fatigue term assumes that fatigue LOWERS performance (measured on maximal efforts).
+
+**Conclusion of Step 3 so far:** with HR-based performance measures from training,
+the fitness–fatigue model is not identifiable on these data, and the reason is
+structural (measurement confound), not only noise. Decision on how to continue: next entry.
+
+---
+
+## 2026-10-25 — Decision: Plan B + race anchor
+
+Athlete's choice: Plan B + race. Only one race in the period (10 km, 27 Sep 2026, 40:59).
+
+**What changes**
+- Time constants fixed from the literature (tau1 = 42 d, tau2 = 7 d); the non-identifiability
+  is a RESULT of the report (Section 6), with its diagnosis (SNR + fatigue/HR confound).
+- State estimation (Step 4): Banister dynamics with literature tau as the process model;
+  the dynamic EF can still be used as a measurement, with an EMPIRICAL measurement
+  equation (fatigue raises EF, as found above), identified with tau fixed.
+- Planning (Step 5): MPC on the literature model (form = fitness − fatigue).
+- Race prediction: anchored on the 10 km race. Riegel equivalent (T2 = T1·(d2/d1)^e):
+  e = 1.04 / 1.06 / 1.08 → 1:29:05 / 1:30:25 / 1:31:47 (4:13 / 4:17 / 4:21 per km).
+  The model only contributes the RELATIVE change of form between 27 Sep and 22 Nov,
+  bounded by the taper effect reported in the literature (Mujika & Padilla 2003).
+
+**Limits to state clearly:** one race = one anchor → the absolute gains k1, k2 cannot be
+estimated; the prediction is a calibrated extrapolation, not an identified model.
