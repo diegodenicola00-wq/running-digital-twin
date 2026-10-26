@@ -654,9 +654,155 @@ not the output of an identified model.
 
 % ---------------------------------------------------------------------
 \section{State estimation}\label{sec:kf}
-% Step 4. State-space form, Kalman filter, measurement noise R estimated
-% by maximum likelihood, daily online use.
-\todo{Step 4.}
+
+Section~\ref{sec:id} showed that the model cannot be identified from the HR-based
+index. This section uses the model anyway, with the literature time constants, as
+the process model of a Kalman filter. The aim is to get a daily estimate of the
+state of the athlete and to separate, in every measurement, the effect of fatigue
+from a slower change of the aerobic level.
+
+\subsection{Model}
+The state of Equation~\eqref{eq:ss} is extended with a third component, an
+\emph{aerobic baseline} $b$ that can change slowly over time (season, long-term
+adaptation, device), modelled as a random walk:
+\begin{equation}
+\mathbf{z}[k+1] = \underbrace{\begin{bmatrix} a_1 & 0 & 0\\ 0 & a_2 & 0\\ 0 & 0 & 1\end{bmatrix}}_{\mathbf{A}}\mathbf{z}[k]
+ + \underbrace{\begin{bmatrix}1\\1\\0\end{bmatrix}}_{\mathbf{B}} w[k] + \boldsymbol{\eta}[k],
+\qquad
+y[k] = \underbrace{\begin{bmatrix} c_1 & c_2 & 1\end{bmatrix}}_{\mathbf{C}}\mathbf{z}[k] + v[k],
+\label{eq:kfmodel}
+\end{equation}
+where $\mathbf{z} = [x_1\;\;x_2\;\;b]^{\mathsf T}$, $a_i = e^{-1/\tau_i}$ with
+$\tau_1 = \SI{42}{days}$ and $\tau_2 = \SI{7}{days}$, and the measurement $y[k]$
+is the dynamic EF of the day (the mean, when there are two runs). The
+measurement equation is empirical and follows the results of
+Section~\ref{sec:id}: fitness has no detectable effect on the index, so $c_1 = 0$,
+while fatigue raises it, so $c_2 \geq 0$. The baseline $b$ is therefore the EF
+that the athlete would have with no fatigue.
+
+The measurement noise $v$ has variance $R = \sigma^2/n_k$, where $n_k$ is the
+number of runs of the day and $\sigma = \SI{0.078}{m/beat}$ is the noise of a
+single run, estimated in Section~\ref{sec:id} from pairs of close runs, i.e.\
+independently of the filter. The process noise $\boldsymbol{\eta}$ has two parts: a
+relative error $\rho$ of the daily load, which enters both $x_1$ and $x_2$
+(variance $(\rho\, w[k])^2$), and the variance $q_b$ of the daily change of the
+baseline. The filter starts on 1~November~2025 with $x_1 = x_2 = 0$ and large
+standard deviations (300 and 100~TRIMP), since the training before that date
+is not known.
+
+\subsection{Filter and tuning}
+The filter is the standard discrete Kalman filter \citep{kalman1960, simon2006}.
+On a day with a measurement, the prediction $\hat y = \mathbf{C}\hat{\mathbf{z}}$ is
+compared with $y$; the difference, the \emph{innovation} $e = y - \hat y$ with
+variance $S = \mathbf{C}\mathbf{P}\mathbf{C}^{\mathsf T} + R$, corrects the state through the gain
+$\mathbf{K} = \mathbf{P}\mathbf{C}^{\mathsf T}/S$:
+\begin{equation}
+\hat{\mathbf{z}} \leftarrow \hat{\mathbf{z}} + \mathbf{K}e, \qquad
+\mathbf{P} \leftarrow (\mathbf{I} - \mathbf{K}\mathbf{C})\,\mathbf{P}.
+\end{equation}
+Then, every day, the load of the day is added with the model,
+$\hat{\mathbf{z}} \leftarrow \mathbf{A}\hat{\mathbf{z}} + \mathbf{B}w$ and
+$\mathbf{P} \leftarrow \mathbf{A}\mathbf{P}\mathbf{A}^{\mathsf T} + \mathbf{Q}$. On days without a
+run only this second step is done, and the uncertainty grows.
+
+The three unknown quantities $c_2$, $q_b$ and $\rho$ were chosen by maximum
+likelihood: since the innovations of a correct filter are Gaussian with variance
+$S$, the log-likelihood of the data is
+$\ell = -\tfrac12 \sum_k \left(\ln 2\pi S_k + e_k^2/S_k\right)$, computed on a grid of
+the three parameters ($13 \times 8 \times 4$ combinations) using only the
+measurements from 1~March to 16~August. The best values are
+$c_2 = \num{4e-4}$~m/beat per TRIMP, $q_b = \num{5e-5}$~(m/beat)$^2$/day, i.e.\ a
+baseline that can drift by about \SI{0.007}{m/beat} per day, and $\rho = 0$.
+
+Two of these results deserve a comment. First, $\rho = 0$ means that the
+measurements carry no information on errors of the load: the estimates of $x_1$
+and $x_2$ coincide with the open-loop Banister states. Second, the fatigue term
+improves the likelihood by only 1.6 (Figure~\ref{fig:innov}, right): with the
+likelihood-ratio test, the 95\,\% interval of $c_2$ goes up to about
+\num{8e-4} but includes zero. On the training data alone, the effect of
+fatigue is therefore not significant at the 5\,\% level.
+
+\subsection{Validation}
+With the parameters fixed, the filter was run on the whole period and its
+one-step-ahead predictions were compared with the 25 measurements from 17~August,
+which were not used for tuning (Table~\ref{tab:kfval}). The filter is the best
+predictor: its error is \SI{17}{\percent} lower than that of the mean of the
+training data and \SI{6}{\percent} lower than the best simple predictor, the
+mean of the last seven measurements. Without the fatigue term, it is no better
+than this simple mean, so on new data the fatigue term is useful.
+
+\begin{table}[ht]
+\centering
+\caption{One-step-ahead prediction of the dynamic EF on the 25 validation days
+(17~August -- 18~October).}
+\label{tab:kfval}
+\begin{tabular}{@{}lc@{}}
+\toprule
+Predictor & RMSE [m/beat] \\
+\midrule
+Kalman filter, with fatigue term    & \textbf{0.073} \\
+Kalman filter, without fatigue term & 0.078 \\
+Mean of the last 7 measurements     & 0.077 \\
+Mean of the training data           & 0.087 \\
+Last measurement                    & 0.108 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[ht]
+\centering
+\safefig{fig07_innovations.pdf}{Left: normalized innovations $e/\sqrt{S}$
+(training in grey, validation in orange). Right: profile log-likelihood of the
+fatigue coefficient $c_2$; values above the dashed line are inside the 95\,\%
+interval.}
+\label{fig:innov}
+\end{figure}
+
+A filter is consistent if its normalized innovations $e/\sqrt S$ behave like white
+noise with unit variance \citep{simon2006}. From 1~March (81 measurements) their
+standard deviation is 0.98 and the lag-one autocorrelation is $-0.14$, inside the
+$\pm 2/\sqrt{81} = \pm 0.22$ limits; on the validation days the mean normalized
+squared innovation (NIS) is 0.74, close to the ideal value of 1. The noise levels
+are therefore realistic. The only visible defect is a small bias in the
+validation period (Figure~\ref{fig:innov}, left): 17 of the 25 innovations are
+positive, with a mean of $+0.32$ (standard error 0.20). This is expected: the
+random walk has no trend, so when the athlete improves steadily, as during the
+structured plan, the estimate of $b$ follows with a small delay. A trend state for
+$b$ would remove it, at the cost of one more parameter.
+
+\subsection{Observability and estimated state}
+With $c_1 = 0$, the observability matrix
+$[\mathbf{C};\,\mathbf{C}\mathbf{A};\,\mathbf{C}\mathbf{A}^2]$ has rank 2 of 3: fitness is not
+observable from this measurement, and the filter can only propagate it from the
+load. Fatigue and baseline are observable. This is the result of
+Section~\ref{sec:id} expressed in the language of state estimation.
+
+\begin{figure}[ht]
+\centering
+\safefig{fig06_kalman.pdf}{Top: dynamic EF, EF with the estimated fatigue effect
+removed, and aerobic baseline $b$ estimated by the filter with its $\pm 2\sigma$
+band. Bottom: fitness and fatigue states.}
+\label{fig:kf}
+\end{figure}
+
+Figure~\ref{fig:kf} shows the result. Removing the fatigue effect makes the
+measurements less scattered around the baseline. The band of $b$ widens during the
+break of August, when there are no measurements, and narrows again when the
+runs start. The baseline was roughly constant from November to August, between
+about 1.50 and \SI{1.62}{m/beat}, and rose from 1.514 on 17~August to
+$1.617 \pm 0.031$~m/beat on 21~October (\SI{+6.8}{\percent}): it is the first
+measurable effect of the structured plan, net of fatigue. On the same day the
+model states were $x_1 = 1526$ and $x_2 = 275$~TRIMP, with a fatigue effect on
+the EF of $+0.11$~m/beat.
+
+\subsection{Use in the next steps}
+The filter gives two outputs with different roles. The states $x_1$ and $x_2$ are
+the initial condition of the taper planning (Section~\ref{sec:mpc}), which works
+on the literature performance model. The baseline $b$ is a monitoring output: it
+shows whether the aerobic level is still improving during the taper, but it is
+not a prediction of race performance, since the index does not measure maximal
+efforts. Every new run updates both, so the filter can be run daily.
+
 
 % ---------------------------------------------------------------------
 \section{Optimal taper planning}\label{sec:mpc}
