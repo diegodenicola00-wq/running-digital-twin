@@ -73,4 +73,19 @@ function cfg = config()
     cfg.dyn.Tgrid      = [30 40 50 60 70 80 100]; % [s]   grid of the HR time constant
     cfg.dyn.vRef       = 3.0;                     % [m/s] reference speed (10.8 km/h)
     cfg.dyn.tRefMin    = 20;                      % [min] reference time (for the drift)
+
+    % --- Kalman filter (Step 4) ------------------------------------------------------
+    % States: x1 fitness, x2 fatigue (literature time constants, Step 3 decision),
+    % b aerobic baseline (random walk). Measurement: dynamic EF = b + c1*x1 + c2*x2 + v.
+    % c1 = 0: fitness is not observable from the HR-based EF (Step 3, t ~ 0).
+    % c2, qb, rho: maximum likelihood on the innovations, idStart .. valStart-1.
+    cfg.kf.tau1     = 42;                         % [days] fitness  (literature)
+    cfg.kf.tau2     = 7;                          % [days] fatigue  (literature)
+    cfg.kf.c1       = 0;                          % [-]    fitness -> EF (not observable)
+    cfg.kf.c2Grid   = 0:1e-4:1.2e-3;              % [m/beat per TRIMP] fatigue -> EF
+    cfg.kf.qbGrid   = [0 3e-6 1e-5 2e-5 3e-5 5e-5 1e-4 3e-4];  % [(m/beat)^2/day] baseline drift
+    cfg.kf.rhoGrid  = [0 0.1 0.2 0.5];            % [-]    relative error of the daily TRIMP
+    cfg.kf.Px0      = [300 100];                  % [TRIMP] std of x1, x2 on 1 Nov 2025 (unknown past)
+    cfg.kf.Pb0      = 0.1^2;                      % [(m/beat)^2] variance of the initial baseline
+    cfg.kf.nInit    = 5;                          % [-]    first measurements used for the initial baseline
 end

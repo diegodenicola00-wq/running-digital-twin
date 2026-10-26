@@ -316,3 +316,49 @@ Athlete's choice: Plan B + race. Only one race in the period (10 km, 27 Sep 2026
 
 **Limits to state clearly:** one race = one anchor → the absolute gains k1, k2 cannot be
 estimated; the prediction is a calibrated extrapolation, not an identified model.
+
+---
+
+## 2026-10-26 — Step 4: Kalman filter (main_04_kalman.m)
+
+**Model.** State z = [x1 fitness; x2 fatigue; b aerobic baseline], tau1 = 42 d, tau2 = 7 d
+(literature, Step 3 decision), b random walk. Measurement: dynamic EF of the day
+(mean if two runs) = b + c1*x1 + c2*x2 + v, c1 = 0 (fitness not observable, Step 3),
+R = sigma^2 / n_runs with sigma = 0.078 from pairs of close runs (independent of the filter).
+Process noise: random walk qb on b, relative TRIMP error rho on x1, x2.
+
+**Tuning.** c2, qb, rho by maximum likelihood of the innovations on 1 Mar – 16 Aug
+(grid 13 x 8 x 4). Best: c2 = 4e-4 m/beat per TRIMP, qb = 5e-5 (m/beat)^2/day, rho = 0.
+Log-lik 58.6 vs 57.0 without the fatigue term (difference 1.6 < 1.92):
+c2 = 0 is inside the 95% likelihood-ratio interval (about 0 – 8e-4) → the fatigue effect
+helps the prediction but is NOT significant at 5% on the training data alone.
+rho = 0: the measurements carry no information on load errors → x1, x2 are the open-loop
+Banister states (zero variance after the burn-in).
+
+**Validation** (one-step-ahead prediction, 25 days from 17 Aug, never seen by the tuning):
+
+| predictor | RMSE [m/beat] |
+|---|---|
+| Kalman, with fatigue | **0.0726** |
+| Kalman, no fatigue term | 0.0782 |
+| mean of last 7 measurements | 0.0773 |
+| mean of training | 0.0871 |
+| last value | 0.1077 |
+
+−17 % vs the training mean, −6 % vs the best simple predictor.
+Consistency: normalized innovations from 1 Mar std 0.98, lag-1 autocorrelation −0.14
+(|.| < 0.22), mean NIS on validation 0.74 → filter consistent, noise levels plausible.
+Small bias on validation: mean normalized innovation +0.32 (17/25 positive, std error 0.20):
+the random-walk baseline lags behind a steadily improving athlete (no trend in the model).
+Possible extension: local linear trend on b (one more state).
+
+**Observability.** O = [C; CA; CA^2], rank 2 of 3 (singular values 1.73, 7e-5, 0):
+x1 unobservable, as expected with c1 = 0.
+
+**State on 21 Oct 2026:** x1 = 1526, x2 = 275 TRIMP (fatigue effect on EF +0.110),
+baseline b = 1.617 ± 0.031 m/beat, from 1.514 on 17 Aug (+6.8 %): first measurable effect
+of the structured plan, net of fatigue.
+
+**Use for Step 5.** The MPC starts from (x1, x2) of the filter (= open-loop states) and
+optimises the literature performance model; b is a monitoring output (is the aerobic base
+still improving during the taper?), not a performance prediction.

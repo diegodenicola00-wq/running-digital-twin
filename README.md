@@ -27,7 +27,7 @@ p[k]    = p0 + k1*x1[k] - k2*x2[k]
 | 1 | Data pipeline: FIT files -> per-second records -> daily load | done (20 Oct 2026) |
 | 2 | Performance index (aerobic efficiency), weather and place covariates | done (21 Oct 2026) |
 | 3 | System identification (variable projection), validation: model NOT identifiable from HR-based measures | done (25 Oct 2026) |
-| 4 | State estimation (Kalman filter), daily online use | |
+| 4 | State estimation (Kalman filter): aerobic baseline + fatigue effect, fitness open loop | done (26 Oct 2026) |
 | 5 | MPC for training-load planning (taper) | |
 | 6 | Pre-registered race prediction vs actual result, report | |
 
@@ -48,11 +48,13 @@ startup_project.m        adds src/ to the path
 main_01_pipeline.m       phase 1 entry point
 main_02_performance.m    phase 2 entry point
 main_03_identification.m phase 3 entry point
+main_04_kalman.m         phase 4 entry point
 src/io/                  FIT header screening, conversion and parsing
 src/load/                training-load metrics (TRIMP)
 src/perf/                aerobic-efficiency index, grade adjustment (Minetti)
 src/env/                 place labels, historical weather (Open-Meteo / ERA5)
 src/model/               Banister states, variable-projection fit
+src/estimation/          Kalman filter
 data/raw/fit/            original FIT files        (NOT committed)
 data/interim/csv/        FIT -> CSV conversions    (NOT committed)
 data/processed/          daily datasets (.mat)     (NOT committed)
