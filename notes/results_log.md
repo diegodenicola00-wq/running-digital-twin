@@ -362,3 +362,69 @@ of the structured plan, net of fatigue.
 **Use for Step 5.** The MPC starts from (x1, x2) of the filter (= open-loop states) and
 optimises the literature performance model; b is a monitoring output (is the aerobic base
 still improving during the taper?), not a performance prediction.
+
+---
+
+## 2026-10-30 — Step 5: taper planning, MPC (main_05_taper.m)
+
+Data updated with the runs of 20, 22, 25, 27, 29 Oct (manual FIT exports). Plan from
+Fri 30 Oct to Sat 21 Nov (23 days), race Sun 22 Nov.
+
+**Problem.** Decision: TRIMP of every session on the usual days (Tue easy, Thu quality,
+Sun long). Objective: race-day performance p = k1*x1 − k2*x2, literature model
+(tau1 = 42 d; nominal k2/k1 = 2, tau2 = 7 d). p is LINEAR in the future loads
+(influence curves, Fitz-Clarke et al. 1991) → linear program (linprog).
+Constraints from the athlete's own last weeks (no new records before a race):
+session ≤ max of the same session in the last 8 weeks (long 187, easy 89, quality 125),
+session ≥ 50 % of usual (long 151, easy 76, quality 88), Mon–Sun week ≤ 386
+(max of the last 12 weeks).
+
+**Robust plan.** The fatigue parameters are not identifiable (Step 3): 9 scenarios
+k2/k1 ∈ {1.5, 2, 3} × tau2 ∈ {5, 7, 10} d. Robust plan = max over w of the WORST CASE of
+p_s(w)/p_s* (p_s*: best achievable in scenario s), epigraph LP.
+
+| | worst case | nominal scenario |
+|---|---|---|
+| usual training (no taper) | 70.8 % | 93.0 % |
+| nominal plan | 82.2 % | 100 % |
+| **robust plan** | **95.1 %** | 99.0 % |
+
+Optimal taper length (last full session → race) depends strongly on the scenario:
+4 days (weak, fast fatigue) to 16 days (k2/k1 = 3, tau2 = 10 d). Nominal: 6 days.
+The robust plan starts the taper on Thu 12 Nov (≈ 10 days, in line with the 8–14 days
+of the taper literature). Cost of 1 % in the nominal scenario buys 13 points in the worst.
+
+Robust plan of 30 Oct (TRIMP / km at the usual intensity of the session):
+Sun 1 Nov long 171 / 17.5 · Tue 3 easy 89 / 10.2 · Thu 5 quality 125 / 14.2 ·
+Sun 8 long 171 / 17.5 · Tue 10 easy 89 / 10.2 · Thu 12 quality 81 / 9.2 ·
+Sun 15 long 75 / 7.7 · Tue 17 easy 38 / 4.3 · Thu 19 quality 44 / 5.0.
+Weeks: 386 / 245 / 82 (usual ≈ 315).
+
+Variants (mirror in Python): long run of 15 Nov at ~12 km (115 TRIMP): nominal 99.1 %,
+worst case 90.8 %; at ~14 km: worst 88.6 %. The model has no notion of specific endurance:
+the athlete may trade some worst-case margin for a longer last long run.
+
+**Closed loop** (100 Monte Carlo runs, ±15 % execution error, 10 % skipped sessions;
+re-planning every 7 days vs following the first plan):
+open loop worst case 91.4 ± 3.5 %, MPC 90.9 ± 3.5 %; nominal 96.7 vs 96.8 %;
+weeks over the cap 0.71 both; MPC better in 55 % of the runs.
+→ Re-planning brings NO measurable benefit here, and the reason is structural: the model is
+linear, the "state" (past load) is known exactly, and the plan sits on active constraints,
+so a lost session cannot be recovered and an overrun cannot be undone. Execution errors cost
+about 4 points in the worst case whatever the strategy. The value of re-planning is practical
+(a consistent plan after a real deviation, e.g. illness), not statistical.
+
+Figures: fig08_taper (load and predicted p), fig09_robust (performance per scenario).
+Plan saved in results/taper_plan_20261030.csv; re-plan on 1, 8, 15 Nov with new runs.
+
+### 2026-10-30 (later) — Athlete's choice: last long run 12 km
+
+The model has no notion of specific endurance and proposes 7.7 km on Sun 15 Nov.
+Choice: fix that session at 12 km (cfg.mpc.fixedDays / fixedKm; lb = ub in the LP).
+Re-optimised robust plan: Thu 12 Nov quality 53 TRIMP / 6 km (was 81 / 9.2), Sun 15 long
+117 / 12; all other sessions unchanged. Weeks: 386 / 259 / 82.
+Percentages are now relative to the best achievable WITH the fixed session (worst case:
+robust 96.6 %, nominal 92.2 %, usual 74.1 %). Cost of the choice w.r.t. the unconstrained
+robust plan: none in the nominal scenario, about 4 points in the worst one (90.8 vs 95.1 %).
+Closed loop: open loop 92.6 ± 3.7 %, MPC 92.5 ± 3.6 % (54 %) → same conclusion as above.
+**Plan to follow from 30 Oct:** results/taper_plan_20261030.csv.

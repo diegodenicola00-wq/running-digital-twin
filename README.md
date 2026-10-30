@@ -28,7 +28,7 @@ p[k]    = p0 + k1*x1[k] - k2*x2[k]
 | 2 | Performance index (aerobic efficiency), weather and place covariates | done (21 Oct 2026) |
 | 3 | System identification (variable projection), validation: model NOT identifiable from HR-based measures | done (25 Oct 2026) |
 | 4 | State estimation (Kalman filter): aerobic baseline + fatigue effect, fitness open loop | done (26 Oct 2026) |
-| 5 | MPC for training-load planning (taper) | |
+| 5 | Taper planning: linear program, robust over uncertain fatigue parameters, weekly re-planning (MPC) | done (30 Oct 2026), re-plan weekly |
 | 6 | Pre-registered race prediction vs actual result, report | |
 
 ## Data windows
@@ -49,12 +49,14 @@ main_01_pipeline.m       phase 1 entry point
 main_02_performance.m    phase 2 entry point
 main_03_identification.m phase 3 entry point
 main_04_kalman.m         phase 4 entry point
+main_05_taper.m          phase 5 entry point (run weekly until the race)
 src/io/                  FIT header screening, conversion and parsing
 src/load/                training-load metrics (TRIMP)
 src/perf/                aerobic-efficiency index, grade adjustment (Minetti)
 src/env/                 place labels, historical weather (Open-Meteo / ERA5)
 src/model/               Banister states, variable-projection fit
 src/estimation/          Kalman filter
+src/control/             taper planning (linear programs, MPC)
 data/raw/fit/            original FIT files        (NOT committed)
 data/interim/csv/        FIT -> CSV conversions    (NOT committed)
 data/processed/          daily datasets (.mat)     (NOT committed)

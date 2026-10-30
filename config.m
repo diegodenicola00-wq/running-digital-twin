@@ -88,4 +88,37 @@ function cfg = config()
     cfg.kf.Px0      = [300 100];                  % [TRIMP] std of x1, x2 on 1 Nov 2025 (unknown past)
     cfg.kf.Pb0      = 0.1^2;                      % [(m/beat)^2] variance of the initial baseline
     cfg.kf.nInit    = 5;                          % [-]    first measurements used for the initial baseline
+
+    % --- Taper planning, MPC (Step 5) -------------------------------------------------
+    % Decision: TRIMP of every session from the plan start to the day before the race.
+    % Objective: performance on race day, p = k1*x1 - k2*x2 (literature model).
+    % Constraints from the athlete's own recent training (no new records before a race):
+    % session load <= max of the same session in the last capWeeks weeks, weekly load
+    % (Mon-Sun) <= max week of the last weekCapWeeks weeks, every session >= minFrac
+    % of its usual load (keep the frequency during the taper, Mujika & Padilla 2003).
+    cfg.mpc.runDays     = [1 3 5];                 % weekday(): 1 = Sun, 3 = Tue, 5 = Thu
+    cfg.mpc.sessionName = ["long", "easy", "quality"];   % same order as runDays
+    cfg.mpc.planStart   = [];                      % [] = today, or the day after the last run
+    cfg.mpc.tau1        = 42;                      % [days] fitness (literature)
+    cfg.mpc.k1          = 1;                       % [-]    fitness gain (only k2/k1 matters)
+    cfg.mpc.k2          = 2;                       % [-]    nominal fatigue gain (literature)
+    cfg.mpc.tau2        = 7;                       % [days] nominal fatigue time constant
+    cfg.mpc.minFrac     = 0.5;                     % [-]    min session load / usual load
+    cfg.mpc.capWeeks    = 8;                       % [weeks] window for session caps and usual loads
+    cfg.mpc.weekCapWeeks = 12;                     % [weeks] window for the weekly cap
+    cfg.mpc.maxDataAge  = 3;                       % [days] warn if the last run is older than this
+    % sessions fixed by the athlete (km at the usual intensity of that session); the
+    % optimiser plans the others around them. 15 Nov: last long run before the race,
+    % 12 km by choice (specific endurance is not in the model; cost in results_log).
+    cfg.mpc.fixedDays   = datetime(2026, 11, 15);
+    cfg.mpc.fixedKm     = 12;                      % [km]
+    % robust plan: worst case over these scenarios of the uncertain fatigue parameters
+    cfg.mpc.scenK2      = [1.5 2 3];               % [-]    k2/k1
+    cfg.mpc.scenTau2    = [5 7 10];                % [days] tau2
+    % closed-loop simulation (receding horizon)
+    cfg.mpc.replanDays  = 7;                       % [days] re-plan every week
+    cfg.mpc.nMC         = 100;                     % [-]    Monte Carlo runs
+    cfg.mpc.loadStd     = 0.15;                    % [-]    relative error executing a session
+    cfg.mpc.pMiss       = 0.10;                    % [-]    probability of skipping a session
+    cfg.mpc.seed        = 1;
 end

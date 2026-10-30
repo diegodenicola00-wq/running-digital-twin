@@ -1,0 +1,10 @@
+date,day,session,trimp_nominal,trimp_robust,km_robust
+01-Nov-2026,Sun,long,171,171,17.5
+03-Nov-2026,Tue,easy,89,89,10.2
+05-Nov-2026,Thu,quality,125,125,14.2
+08-Nov-2026,Sun,long,171,171,17.5
+10-Nov-2026,Tue,easy,89,89,10.2
+12-Nov-2026,Thu,quality,125,53,6
+15-Nov-2026,Sun,long,117,117,12
+17-Nov-2026,Tue,easy,38,38,4.3
+19-Nov-2026,Thu,quality,44,44,5
