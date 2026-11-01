@@ -29,7 +29,7 @@ p[k]    = p0 + k1*x1[k] - k2*x2[k]
 | 3 | System identification (variable projection), validation: model NOT identifiable from HR-based measures | done (25 Oct 2026) |
 | 4 | State estimation (Kalman filter): aerobic baseline + fatigue effect, fitness open loop | done (26 Oct 2026) |
 | 5 | Taper planning: linear program, robust over uncertain fatigue parameters, weekly re-planning (MPC) | done (30 Oct 2026), re-plan weekly |
-| 6 | Pre-registered race prediction vs actual result, report | |
+| 6 | Pre-registered race prediction vs actual result, report | method committed 1 Nov 2026; final run 19-20 Nov |
 
 ## Data windows
 
@@ -50,6 +50,7 @@ main_02_performance.m    phase 2 entry point
 main_03_identification.m phase 3 entry point
 main_04_kalman.m         phase 4 entry point
 main_05_taper.m          phase 5 entry point (run weekly until the race)
+main_06_prediction.m     phase 6: pre-registered race prediction
 src/io/                  FIT header screening, conversion and parsing
 src/load/                training-load metrics (TRIMP)
 src/perf/                aerobic-efficiency index, grade adjustment (Minetti)

@@ -110,8 +110,15 @@ function cfg = config()
     % sessions fixed by the athlete (km at the usual intensity of that session); the
     % optimiser plans the others around them. 15 Nov: last long run before the race,
     % 12 km by choice (specific endurance is not in the model; cost in results_log).
-    cfg.mpc.fixedDays   = datetime(2026, 11, 15);
-    cfg.mpc.fixedKm     = 12;                      % [km]
+    % 1 Nov: no run (the long run was moved to Sat 31 Oct).
+    cfg.mpc.fixedDays   = [datetime(2026, 11, 1), datetime(2026, 11, 15)];
+    cfg.mpc.fixedKm     = [0, 12];                 % [km]
+    % athlete's own plan (results/athlete_plan.csv), evaluated with the same model.
+    % TRIMP per km: easy from the athlete's easy runs (median 8.7); half-marathon pace
+    % (~4:30/km, ~178 bpm) and threshold (~4:20/km, ~183 bpm) from the TRIMP formula.
+    cfg.mpc.rate.easy      = 8.5;                  % [TRIMP/km]
+    cfg.mpc.rate.hm        = 12.8;                 % [TRIMP/km]
+    cfg.mpc.rate.threshold = 13.6;                 % [TRIMP/km]
     % robust plan: worst case over these scenarios of the uncertain fatigue parameters
     cfg.mpc.scenK2      = [1.5 2 3];               % [-]    k2/k1
     cfg.mpc.scenTau2    = [5 7 10];                % [days] tau2
@@ -121,4 +128,17 @@ function cfg = config()
     cfg.mpc.loadStd     = 0.15;                    % [-]    relative error executing a session
     cfg.mpc.pMiss       = 0.10;                    % [-]    probability of skipping a session
     cfg.mpc.seed        = 1;
+
+    % --- Pre-registered race prediction (Step 6) -----------------------------------
+    % Method fixed BEFORE the race (see main_06_prediction.m): Riegel from the 10 km
+    % race, adjusted by the change of the aerobic baseline (Kalman) since that race.
+    cfg.pred.anchorDate = datetime(2026, 9, 27);   % 10 km race
+    cfg.pred.anchorDist = 10;                      % [km]
+    cfg.pred.anchorTime = 40*60 + 59;              % [s]  40:59
+    cfg.pred.raceDist   = 21.0975;                 % [km]
+    cfg.pred.eCentral   = 1.06;                    % [-]  Riegel exponent (Riegel 1981)
+    cfg.pred.eRange     = [1.04 1.08];             % [-]  uniform range of the exponent
+    cfg.pred.nMC        = 1e5;                     % [-]  Monte Carlo samples
+    cfg.pred.interval   = [10 90];                 % [%]  percentiles of the interval
+    cfg.pred.seed       = 1;
 end

@@ -1,0 +1,8 @@
+Pre-registered prediction, half marathon 22-Nov-2026
+Produced: 01-Nov-2026 13:38, data up to 31-Oct-2026
+Anchor: 10 km, 27-Sep-2026, 00:40:59
+Riegel e = 1.04 / 1.06 / 1.08: 01:29:05 / 01:30:26 / 01:31:47
+Baseline change since anchor: g = -1.26 % +- 2.09 %
+CENTRAL: 01:31:35 (00:04:20 per km)
+80% INTERVAL: 01:28:57 - 01:34:22
+Freshness: form higher on race day in 9 of 9 model scenarios (not used)

@@ -428,3 +428,37 @@ robust 96.6 %, nominal 92.2 %, usual 74.1 %). Cost of the choice w.r.t. the unco
 robust plan: none in the nominal scenario, about 4 points in the worst one (90.8 vs 95.1 %).
 Closed loop: open loop 92.6 ± 3.7 %, MPC 92.5 ± 3.6 % (54 %) → same conclusion as above.
 **Plan to follow from 30 Oct:** results/taper_plan_20261030.csv.
+
+---
+
+## 2026-11-01 — Athlete's own plan; Step 6 prediction method (pre-registered)
+
+**Athlete's plan.** The athlete follows his own programme (results/athlete_plan.csv),
+adapted day by day; the MPC is decision support. Long run moved to Sat 31 Oct: 20 km,
+217 TRIMP (estimated 187 from km: the per-km rates of the plan file are ~15 % low on
+hilly runs). Sun 1 Nov fixed at 0 km in config. Model evaluation of the athlete's plan
+(estimated TRIMP): nominal ≈ 93 %, worst case ≈ 79 % of the best achievable, vs robust
+MPC plan 98.6 / 96.7 %. Reason: light week 2–8 Nov (248) and heaviest week 9–15 Nov (417)
+at 7–13 days from the race. Variants tried: none changes the picture by > 2 points.
+The model ignores specificity (half-marathon-pace work): not a reason to change the plan.
+
+**Prediction method (fixed today, main_06_prediction.m, cfg.pred):**
+T_half = T_10k · (21.0975/10)^e / (1 + g)
+- anchor 10 km 27 Sep 2026, 40:59; e uniform in [1.04, 1.08], central 1.06 (Riegel 1981);
+- g = relative change of the Kalman aerobic baseline b from 27 Sep to the last run, by a
+  fixed-point smoother (state augmented with a frozen copy of b on 27 Sep: exact
+  covariance of the difference with a plain Kalman filter);
+- 80 % interval = 10th–90th percentile, Monte Carlo over e and g;
+- taper freshness reported by the Banister model (9 scenarios) but NOT used in the number.
+
+**Provisional run (data to 31 Oct):** g = −1.3 % ± 2.1 % (b 1.593 → 1.572);
+central 1:31:35, 80 % interval 1:28:57 – 1:34:22. Riegel alone: 1:29:05 / 1:30:26 / 1:31:47.
+Form on race day higher than on 27 Sep in 9/9 scenarios (fitness +287, form +133 … +242).
+
+**Noted BEFORE the final run (so that it cannot be a post-hoc choice):**
+the last three runs (27, 29, 31 Oct) were in L'Aquila (600–720 m, hilly); the baseline fell
+from 1.617 (21 Oct, Milan) to 1.572. The change is within one standard deviation. Step 2
+found no L'Aquila penalty on the steady EF, so the method is NOT changed. After the race a
+sensitivity analysis will recompute g with Milan runs only and report both.
+The prediction is probably conservative: the freshness term (positive in all scenarios)
+is not used.

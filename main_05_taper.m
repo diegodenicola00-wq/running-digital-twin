@@ -64,7 +64,26 @@ end
 [wRob, infoR] = taper_lp(dHist, wHist, raceDay, lim, P, 'robust');
 H = infoR.days;  type = infoR.type;  F = infoR.F;  c = infoR.c;  pStar = infoR.pStar;
 wHab = zeros(size(H));  wHab(type > 0) = lim.ref(type(type > 0));      % usual training, no taper
+wHab(infoR.fixed) = infoR.lb(infoR.fixed);                              % ...with the fixed sessions
 rel = @(w) (c + F*w) ./ pStar;
+
+% athlete's own plan (optional): results/athlete_plan.csv, one row per session,
+% columns date (yyyy-mm-dd), km_easy, km_hm, km_threshold, description
+athFile = fullfile(cfg.paths.results, 'athlete_plan.csv');
+hasAth  = isfile(athFile);
+wAth    = zeros(size(H));
+if hasAth
+    opts = detectImportOptions(athFile, 'TextType', 'string');
+    opts = setvartype(opts, 'date', 'datetime');
+    opts = setvaropts(opts, 'date', 'InputFormat', 'yyyy-MM-dd');
+    Ath  = readtable(athFile, opts);
+    Ath.km    = Ath.km_easy + Ath.km_hm + Ath.km_threshold;
+    Ath.trimp = round(Ath.km_easy*P.rate.easy + Ath.km_hm*P.rate.hm + Ath.km_threshold*P.rate.threshold);
+    [tf, loc] = ismember(Ath.date, H);
+    wAth = accumarray(loc(tf), Ath.trimp(tf), [numel(H), 1]);
+    fprintf('\nYour plan (%s), sessions from %s:\n', 'results/athlete_plan.csv', datestr(start, 'dd-mmm'));
+    disp(Ath(tf, {'date', 'km', 'trimp', 'description'}));
+end
 
 on = type > 0;
 names = strings(size(H));  names(on) = P.sessionName(type(on));
@@ -79,6 +98,7 @@ wk = floor(days(H - datetime(2000, 1, 3)) / 7);
 [gw, ~] = findgroups(wk);
 Wk = table(splitapply(@(d) d(1), H, gw), splitapply(@sum, wNom, gw), splitapply(@sum, wRob, gw), ...
     splitapply(@sum, wHab, gw), 'VariableNames', {'from', 'nominal', 'robust', 'usual'});
+if hasAth, Wk.yours = splitapply(@sum, wAth, gw); end
 fprintf('Planned load per week (days from the plan start only):\n');
 disp(Wk);
 
@@ -96,9 +116,14 @@ Rs = table(sc(:, 1), sc(:, 2), taperDays, 100*rel(wNom), 100*rel(wRob), 100*rel(
     'VariableNames', {'k2', 'tau2', 'optimal_taper_days', 'nominal_pct', 'robust_pct', 'usual_pct'});
 fprintf(['Scenarios: race-day performance of each plan, %% of the best achievable in that scenario (with the fixed sessions)\n', ...
          '(optimal_taper_days: days between the last full session and the race, if that scenario were true)\n']);
+if hasAth, Rs.yours_pct = 100*rel(wAth); end
 disp(Rs);
 fprintf('Worst case: nominal plan %.1f%%, robust plan %.1f%%, usual training %.1f%%\n', ...
     100*min(rel(wNom)), 100*min(rel(wRob)), 100*min(rel(wHab)));
+if hasAth
+    rA = rel(wAth);
+    fprintf('Your plan: worst case %.1f%%, nominal scenario %.1f%%\n', 100*min(rA), 100*rA(infoR.iNom));
+end
 
 %% 5. Closed loop: open-loop plan vs weekly re-planning (MPC)
 rng(P.seed);
@@ -135,7 +160,7 @@ fprintf('  MPC better than open loop (worst case) in %.0f%% of the runs\n', 100*
 stamp = datestr(start, 'yyyymmdd');
 writetable(Plan, fullfile(cfg.paths.results, ['taper_plan_' stamp '.csv']));
 save(fullfile(cfg.paths.processed, 'mpc.mat'), 'Plan', 'Wk', 'Rs', 'MC', 'lim', 'wNom', 'wRob', ...
-    'wHab', 'infoR', 'start', 'raceDay');
+    'wHab', 'wAth', 'infoR', 'start', 'raceDay');
 
 %% 6. Figures
 dPast = dHist(dHist >= start - caldays(42));
@@ -146,16 +171,20 @@ nexttile; hold on
 bar(dPast, wPast, 0.8, 'FaceColor', [0.7 0.7 0.7], 'EdgeColor', 'none', 'DisplayName', 'done');
 bar(H, wRob, 0.8, 'FaceColor', [0 0.45 0.74], 'EdgeColor', 'none', 'DisplayName', 'robust plan');
 plot(H(on), wNom(on), 'o', 'Color', [0.85 0.33 0.10], 'LineWidth', 1.5, 'DisplayName', 'nominal plan');
+if hasAth
+    plot(H(wAth > 0), wAth(wAth > 0), 'd', 'Color', [0.1 0.1 0.1], 'MarkerFaceColor', [0.1 0.1 0.1], ...
+        'DisplayName', 'your plan');
+end
 xline(start - hours(12), ':', 'today', 'HandleVisibility', 'off');
 xline(raceDay, '-', 'half marathon', 'HandleVisibility', 'off');
 ylabel('daily TRIMP'); grid on; legend('Location', 'northwest');
 title('Training load: last 6 weeks and plan to the race');
 nexttile; hold on
 dAll = [dHist; H; raceDay];
-cols = {[0 0.45 0.74], [0.85 0.33 0.10], [0.5 0.5 0.5]};
-lab  = {'robust plan', 'nominal plan', 'usual training (no taper)'};
-plans = {wRob, wNom, wHab};
-for q = 1:3
+cols = {[0 0.45 0.74], [0.85 0.33 0.10], [0.5 0.5 0.5], [0.1 0.1 0.1]};
+lab  = {'robust plan', 'nominal plan', 'usual training (no taper)', 'your plan'};
+plans = {wRob, wNom, wHab, wAth};
+for q = 1:3 + hasAth
     pp = perf_path([wHist; plans{q}], P.tau1, P.tau2, P.k1, P.k2);
     keep = dAll >= start - caldays(42);
     plot(dAll(keep), 100*pp(keep)/pStar(infoR.iNom), '-', 'LineWidth', 2, 'Color', cols{q}, ...
@@ -170,11 +199,15 @@ export_report_figure(fig8, 'fig08_taper', cfg);
 
 fig9 = figure('Name', 'Robustness', 'Position', [100 100 1000 420]);
 labs = arrayfun(@(s) sprintf('%g / %g d', sc(s, 1), sc(s, 2)), 1:nS, 'UniformOutput', false);
-bh = bar(categorical(labs, labs), [Rs.usual_pct, Rs.nominal_pct, Rs.robust_pct], 0.85);
+Y = [Rs.usual_pct, Rs.nominal_pct, Rs.robust_pct];
+legs = {'usual training', 'nominal plan', 'robust plan'};
+if hasAth, Y = [Y, Rs.yours_pct]; legs{end+1} = 'your plan'; end
+bh = bar(categorical(labs, labs), Y, 0.85);
 bh(1).FaceColor = [0.6 0.6 0.6];  bh(2).FaceColor = [0.85 0.33 0.10];  bh(3).FaceColor = [0 0.45 0.74];
-ylim([min([Rs.usual_pct; Rs.nominal_pct]) - 3, 101]);
+if hasAth, bh(4).FaceColor = [0.1 0.1 0.1]; end
+ylim([min(Y(:)) - 3, 101]);
 xlabel('scenario  k_2/k_1 / \tau_2'); ylabel('% of best achievable'); grid on
-legend({'usual training', 'nominal plan', 'robust plan'}, 'Location', 'southwest');
+legend(legs, 'Location', 'southwest');
 title(sprintf('Race-day performance in every scenario (worst case: nominal %.1f%%, robust %.1f%%)', ...
     100*min(rel(wNom)), 100*min(rel(wRob))));
 exportgraphics(fig9, fullfile(cfg.paths.results, 'fig09_robust.png'), 'Resolution', 200);
