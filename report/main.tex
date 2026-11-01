@@ -806,9 +806,165 @@ efforts. Every new run updates both, so the filter can be run daily.
 
 % ---------------------------------------------------------------------
 \section{Optimal taper planning}\label{sec:mpc}
-% Step 5. MPC formulation, constraints, comparison with the actual plan
-% \citep{mujika2003}.
-\todo{Step 5.}
+
+The last part of the project uses the model to answer a practical question: how
+much should the athlete train in the three weeks before the half marathon? The
+answer has to take into account that the model parameters are uncertain
+(Section~\ref{sec:id}), so the aim is not the best plan for one model but a plan
+that works well for every plausible one.
+
+\subsection{Problem formulation}
+The decision variables are the loads $w[k]$ of the days from the planning day to
+the day before the race, day $N$. Since the model is linear, the performance on
+race day is a linear function of these loads:
+\begin{equation}
+p[N] = c + \sum_{k} f[k]\, w[k], \qquad
+f[k] = k_1\, a_1^{\,m-1} - k_2\, a_2^{\,m-1}, \quad m = N - k,
+\label{eq:influence}
+\end{equation}
+where $c$ is the contribution of the load already done and $f[k]$ is the
+\emph{influence curve} of \citet{fitzclarke1991}: the effect on race day of one
+unit of load done $m$ days before. Far from the race $f > 0$, because fitness
+lasts longer than fatigue; close to the race $f < 0$. With the nominal
+literature values ($k_2/k_1 = 2$, $\tau_1 = \SI{42}{days}$, $\tau_2 = \SI{7}{days}$)
+the sign changes at
+$m^* = \ln(k_2/k_1) / (1/\tau_2 - 1/\tau_1) \approx \SI{6}{days}$: any training
+in the last six days lowers the predicted performance.
+
+Maximising Equation~\eqref{eq:influence} alone would give an absurd plan,
+unlimited training until six days before the race and then complete rest, so
+the constraints are what makes the plan realistic. They are taken from the
+athlete's own recent training, following the rule that no records should be
+set just before a race:
+\begin{itemize}
+\item training only on the usual days: Tuesday (easy run), Thursday (quality
+session) and Sunday (long run);
+\item every session at most as hard as the hardest session of the same type in
+the last eight weeks (long run 187, easy run 89, quality session
+\SI{125}{TRIMP});
+\item every week (Monday to Sunday) at most as hard as the hardest week of the
+last twelve (\SI{386}{TRIMP});
+\item every session at least \SI{50}{\percent} of its usual load, because during a
+taper the volume is reduced but the training frequency is kept
+\citep{mujika2003}.
+\end{itemize}
+Objective and constraints are linear, so the problem is a linear program, solved
+with \texttt{linprog}.
+
+\subsection{Robust plan}
+The parameters that decide the length of the taper are exactly those of
+fatigue, which could not be identified. Nine scenarios were therefore
+considered, combining $k_2/k_1 \in \{1.5, 2, 3\}$ and
+$\tau_2 \in \{5, 7, \SI{10}{days}\}$. The optimal taper changes a lot between
+them: if each scenario were true, the last full session should be between 4 and
+16 days before the race. A plan optimised for the nominal scenario can therefore
+be very wrong.
+
+For this reason the plan actually proposed is \emph{robust}: it maximises the
+worst case, over the nine scenarios $s$, of the performance relative to the best
+achievable in that scenario, $p_s^*$. Written with an auxiliary variable $t$
+(epigraph form), this is still a linear program:
+\begin{equation}
+\max_{\mathbf{w},\, t} \; t
+\quad \text{subject to} \quad
+t \leq \frac{c_s + \mathbf{f}_s^{\mathsf T}\mathbf{w}}{p_s^*} \;\; \forall s,
+\quad \text{and the constraints above}.
+\label{eq:robust}
+\end{equation}
+This is the basic idea of robust model predictive control
+\citep{bemporad1999}, applied to a problem with a single decision step.
+
+The first plan was computed on 30~October. In the worst scenario
+($k_2/k_1 = 3$, $\tau_2 = \SI{10}{days}$) the nominal plan reaches only
+\SI{82}{\percent} of the achievable performance, the robust plan
+\SI{95}{\percent}, and the usual training without any taper \SI{71}{\percent}.
+In the nominal scenario the robust plan loses only \SI{1}{\percent}: a small price
+for a much smaller risk. The robust plan keeps the maximum load until
+12~November and then reduces it, a taper of about ten days, in agreement with
+the 8--14 days found most effective in the meta-analysis of \citet{bosquet2007}.
+
+The model has no notion of specific endurance, and its plan contained a last
+long run of only \SI{8}{km} one week before the race. The athlete chose to fix
+that session at \SI{12}{km}. The cost, evaluated with the same model, is
+practically zero in the nominal scenario and about four points in the worst
+one; the optimiser compensated by shortening the quality session of
+12~November. The resulting plan is in Table~\ref{tab:plan}.
+
+\begin{table}[ht]
+\centering
+\caption{Robust plan of 30~October 2026, with the long run of 15~November fixed
+at \SI{12}{km}. Distances at the usual intensity of each session.}
+\label{tab:plan}
+\small
+\begin{tabular}{@{}llcc@{}}
+\toprule
+Date & Session & Load [TRIMP] & Distance [km] \\
+\midrule
+Sun 1 Nov  & long    & 171 & 17.5 \\
+Tue 3 Nov  & easy    &  89 & 10.2 \\
+Thu 5 Nov  & quality & 125 & 14.2 \\
+Sun 8 Nov  & long    & 171 & 17.5 \\
+Tue 10 Nov & easy    &  89 & 10.2 \\
+Thu 12 Nov & quality &  53 &  6.0 \\
+Sun 15 Nov & long    & 117 & 12.0 \\
+Tue 17 Nov & easy    &  38 &  4.3 \\
+Thu 19 Nov & quality &  44 &  5.0 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[ht]
+\centering
+\safefig{fig09_robust.pdf}{Race-day performance of each plan in the nine
+scenarios ($k_2/k_1$ / $\tau_2$), as a percentage of the best achievable in that
+scenario (latest re-planning).}
+\label{fig:robust}
+\end{figure}
+
+\subsection{Receding horizon}
+The plan is recomputed every week from the load actually done, which is the
+receding-horizon principle of model predictive control \citep{rawlings2017}.
+To see whether this feedback is useful, a Monte Carlo simulation (100 runs) was
+done in which every session is executed with a random error of
+\SI{15}{\percent} and \SI{10}{\percent} of the sessions are skipped. Following the
+first plan without changes and re-planning every week give the same result
+(\SI{92.6}{\percent} and \SI{92.5}{\percent} in the worst scenario, on average),
+and re-planning is better in only about half of the runs.
+
+This negative result has a structural reason. The model is linear and its state,
+the past load, is known exactly, so there is nothing to estimate; and the plan
+lies on active constraints, so a skipped session cannot be recovered and a
+session done too hard cannot be undone. The value of re-planning here is
+practical rather than statistical: it gives a consistent plan after a real
+deviation. An example happened in the first week: the athlete moved the long
+run from Sunday 1 to Saturday 31~October, and the next plan simply started from
+the load actually done.
+
+\subsection{The athlete's own plan}
+In practice the athlete follows his own programme, built before the model and
+adapted day by day to how he feels; the planner is used as a quantitative second
+opinion, with the athlete in the loop. His programme contains more
+half-marathon-pace work, a light week from 2 to 8~November and the hardest week
+from 9 to 15~November. Evaluated with the same model (Figure~\ref{fig:taper}),
+it reaches about \SI{96}{\percent} of the achievable performance in the nominal
+scenario and \SI{81}{\percent} in the worst one: the hardest week falls 7--13
+days before the race, which is penalised if fatigue decays slowly. The model,
+however, only sees the load and ignores the specificity of the sessions, which is
+the main reason of the athlete's choices; the comparison is therefore a
+measure of risk, not a verdict.
+
+\begin{figure}[ht]
+\centering
+\safefig{fig08_taper.pdf}{Top: load of the last six weeks and plans to the race
+(robust, nominal and athlete's plan). Bottom: performance predicted by the nominal
+model for each plan, as a percentage of the best achievable on race day
+(latest re-planning).}
+\label{fig:taper}
+\end{figure}
+
+\todo{Update after the last re-planning (14 Nov): final figures, load actually
+done compared with the plans.}
+
 
 % ---------------------------------------------------------------------
 \section{Pre-registered prediction and race result}\label{sec:race}
