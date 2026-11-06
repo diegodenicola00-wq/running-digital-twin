@@ -462,3 +462,28 @@ found no L'Aquila penalty on the steady EF, so the method is NOT changed. After 
 sensitivity analysis will recompute g with Milan runs only and report both.
 The prediction is probably conservative: the freshness term (positive in all scenarios)
 is not used.
+
+---
+
+## 2026-11-06 — Re-planning 1 (data to Thu 5 Nov)
+
+Runs added: Tue 3 Nov easy 9 km (75 TRIMP), Thu 5 Nov 4×1500 m threshold, Milan,
+137 TRIMP (new max for the quality session; estimated 124 from km).
+(First run of the script missed the 5 Nov file: always check "Last run:" in the output.)
+Weekly cap now 431 (the week of the 31 Oct long run is complete).
+
+Robust plan from 6 Nov: Sun 8 long 187 / 19.4 km, Tue 10 easy 89, Thu 12 quality 55 / 6.2 km,
+Sun 15 long 117 / 12 (fixed), Tue 17 38, Thu 19 44. Worst case: robust 96.3 %,
+nominal 91.5 %, usual 79.8 %. Athlete's plan: nominal 95.6 %, worst 81.1 %
+(robust plan in the nominal scenario: 98.4 %).
+
+Where the 2.8 points (nominal scenario) between the athlete's plan and the robust plan
+come from, by the influence curve f(m) = a1^(m-1) − 2 a2^(m-1):
+- Sun 8 + Mon 9 (47 + 170) vs Sun 8 (187): about +7 for the athlete (m = 13–14, f ≈ 0.4);
+- Tue 10 51 vs 89: −13; Thu 12 81 vs 55: +7;
+- race week: Tue 17 (+13 TRIMP, f ≈ −0.2), Thu 19 (+16, f ≈ −0.55) and the shakeout of
+  Sat 21 (26 TRIMP, f = −1): about −38, of which −26 from the shakeout alone.
+→ The gap is almost entirely the race week, mostly the day-before shakeout. The model has no
+priming effect (short activation before a race), so this is a known limit, not advice.
+Load Sun 8 – Sun 15: athlete 464, robust 446: same total, different distribution.
+The per-km rates of the plan file underestimate hard sessions (Thu 5: +10 %, Sat 31: +16 %).
