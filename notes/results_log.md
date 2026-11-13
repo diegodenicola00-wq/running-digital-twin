@@ -487,3 +487,26 @@ come from, by the influence curve f(m) = a1^(m-1) − 2 a2^(m-1):
 priming effect (short activation before a race), so this is a known limit, not advice.
 Load Sun 8 – Sun 15: athlete 464, robust 446: same total, different distribution.
 The per-km rates of the plan file underestimate hard sessions (Thu 5: +10 %, Sat 31: +16 %).
+
+---
+
+## 2026-11-13 — Re-planning 2 (data to Thu 12 Nov), last before the race
+
+Week actually done (differs from the athlete's plan): Sat 7 Nov unplanned 7.4 km in
+Valdidentro (~1240 m a.s.l.), ~80 TRIMP; Sun 8 nothing; Mon 9 16 km with 8 at half-marathon
+pace, ~186 TRIMP (HR avg 164, max 195; Garmin: "overreaching"); Tue 10 skipped;
+Thu 12 4×1 km at half-marathon pace, 7.9 km, ~80 TRIMP. athlete_plan.csv updated
+(past rows marked done; future unchanged).
+
+Robust plan from 13 Nov: Sun 15 long 116 / 12 km (fixed), Tue 17 easy 43 / 4.9 km,
+Thu 19 quality 44 / 4.4 km, nothing on Sat 21. With 9 days left all optimised plans
+converge: worst case robust 99.3 %, nominal 99.2 %, usual training 83.7 %.
+Athlete's plan: nominal 97.1 %, worst case 86.6 %. The gap (nominal) is the race week:
+Tue 17 +8 TRIMP, Thu 19 +16, Sat 21 shakeout 26 at f = −1 → about 70 % of the gap is the
+shakeout, which the model cannot value (no priming effect). Closed loop: identical
+(re-planning after 7 days leaves only Sat 21).
+
+**Noted BEFORE the final prediction run (pre-registration):** besides the L'Aquila runs,
+the run of 7 Nov was at ~1240 m; altitude and hills may lower the measured EF and therefore
+g. Method NOT changed; the post-race sensitivity analysis (Milan runs only) will exclude
+both L'Aquila and Valdidentro.
