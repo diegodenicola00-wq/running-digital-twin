@@ -917,7 +917,7 @@ Thu 19 Nov & quality &  44 &  5.0 \\
 \centering
 \safefig{fig09_robust.pdf}{Race-day performance of each plan in the nine
 scenarios ($k_2/k_1$ / $\tau_2$), as a percentage of the best achievable in that
-scenario (latest re-planning).}
+scenario (re-planning of 13~November).}
 \label{fig:robust}
 \end{figure}
 
@@ -936,34 +936,72 @@ the past load, is known exactly, so there is nothing to estimate; and the plan
 lies on active constraints, so a skipped session cannot be recovered and a
 session done too hard cannot be undone. The value of re-planning here is
 practical rather than statistical: it gives a consistent plan after a real
-deviation. An example happened in the first week: the athlete moved the long
-run from Sunday 1 to Saturday 31~October, and the next plan simply started from
-the load actually done.
+deviation. The plan was recomputed on 1, 6 and 13~November, and each time the
+week actually done differed from the plan: the long run moved from Sunday 1 to
+Saturday 31~October, an unplanned run on 7~November, two easy runs skipped. The
+next plan simply started from the load actually done. One practical lesson: the
+first re-planning of 6~November missed a session whose file had not been added,
+and proposed a long run that the athlete did not need; the script now prints the
+date of the last run, which is checked before using the plan.
 
 \subsection{The athlete's own plan}
 In practice the athlete follows his own programme, built before the model and
 adapted day by day to how he feels; the planner is used as a quantitative second
 opinion, with the athlete in the loop. His programme contains more
-half-marathon-pace work, a light week from 2 to 8~November and the hardest week
-from 9 to 15~November. Evaluated with the same model (Figure~\ref{fig:taper}),
-it reaches about \SI{96}{\percent} of the achievable performance in the nominal
-scenario and \SI{81}{\percent} in the worst one: the hardest week falls 7--13
-days before the race, which is penalised if fatigue decays slowly. The model,
-however, only sees the load and ignores the specificity of the sessions, which is
-the main reason of the athlete's choices; the comparison is therefore a
-measure of risk, not a verdict.
+half-marathon-pace work, a light week from 2 to 8~November and the hardest
+session on 9~November (\SI{16}{km} with \SI{8}{km} at race pace, the highest
+load of the month), and it keeps some running in the race week, including a
+short shake-out run the day before the race. The week actually done was
+different again (an unplanned run on 7~November, two easy runs skipped), so the
+comparison was repeated at every re-planning on the plan as it stood
+(Table~\ref{tab:athlete}, the two re-plannings with the complete data).
+
+\begin{table}[ht]
+\centering
+\caption{Race-day performance of the athlete's plan and of the robust plan, in
+\% of the best achievable, at each re-planning.}
+\label{tab:athlete}
+\small
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+ & \multicolumn{2}{c}{Athlete's plan} & \multicolumn{2}{c}{Robust plan} \\
+\cmidrule(lr){2-3}\cmidrule(lr){4-5}
+Re-planning & nominal & worst case & nominal & worst case \\
+\midrule
+6 November  & 95.6 & 81.1 & 98.4 & 96.3 \\
+13 November & 97.1 & 86.6 & 99.9 & 99.3 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+In the nominal scenario the athlete's plan is always within about three points of
+the optimum; in the worst one it is clearly behind, because the load of the last
+two weeks is penalised if fatigue decays slowly. The influence curve shows where
+the gap comes from. In the last re-planning almost all of it is in the race week,
+and about \SI{70}{\percent} is due to the shake-out run of the day before, which
+enters with the most negative weight, $f = k_1 - k_2 < 0$. The model has no way
+to represent the short-term benefit that runners look for in such a session, so
+this is a limit of the model rather than a mistake of the plan. More generally,
+the model only sees the load and ignores the specificity of the sessions, which is
+the main reason of the athlete's choices: the comparison is a measure of risk, not
+a verdict.
+
+A last observation concerns the inputs of this comparison. The loads of the
+athlete's plan were estimated from distances and paces (about 8.5, 12.8 and
+\SI{13.6}{TRIMP/km} for easy running, half-marathon pace and threshold), while the
+measured loads of the hard sessions were 10--\SI{16}{\percent} higher. The
+estimates of future sessions are therefore slightly optimistic for the athlete's
+plan, while the re-planning corrects them with the real load every week.
 
 \begin{figure}[ht]
 \centering
 \safefig{fig08_taper.pdf}{Top: load of the last six weeks and plans to the race
 (robust, nominal and athlete's plan). Bottom: performance predicted by the nominal
 model for each plan, as a percentage of the best achievable on race day
-(latest re-planning).}
+(re-planning of 13~November).}
 \label{fig:taper}
 \end{figure}
 
-\todo{Update after the last re-planning (14 Nov): final figures, load actually
-done compared with the plans.}
 
 
 % ---------------------------------------------------------------------
