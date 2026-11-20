@@ -510,3 +510,30 @@ shakeout, which the model cannot value (no priming effect). Closed loop: identic
 the run of 7 Nov was at ~1240 m; altitude and hills may lower the measured EF and therefore
 g. Method NOT changed; the post-race sensitivity analysis (Milan runs only) will exclude
 both L'Aquila and Valdidentro.
+
+---
+
+## 2026-11-20 — FINAL PRE-REGISTERED PREDICTION (written before the race of 22 Nov)
+
+Data up to Thu 19 Nov (last three runs in Milan: Sun 15 12 km, Tue 17 6 km easy,
+Thu 19 7 km with race-pace repetitions). main_01 … main_04 re-run, then main_06
+(method unchanged since 1 Nov). Output file: results/prediction_20261120.txt.
+
+- Riegel only: 1:29:05 / 1:30:26 / 1:31:47 (e = 1.04 / 1.06 / 1.08)
+- Aerobic baseline (Kalman, fixed-point smoother): 1.588 on 27 Sep → 1.525 on 19 Nov,
+  g = −3.9 % ± 2.2 %
+- **CENTRAL PREDICTION: 1:34:08 (4:28 /km)**
+- **80 % INTERVAL: 1:31:12 – 1:37:14**
+- Banister freshness check (not used): form on race day higher than on 27 Sep in 9/9
+  scenarios (fitness +308, form +114 … +245).
+
+**Hypothesis registered before the race.** The baseline kept falling during the taper even
+with Milan-only runs, so altitude/hills are not the whole story. Step 3 found that fatigue
+LOWERS submaximal HR (Bosquet 2008), i.e. raises the HR-based EF; the filter models this with
+c2 = 4e-4, which was not significant and may be too small. If the true effect is larger, the
+fatigue removed by the taper raises HR at a given speed, the filter attributes the drop to b,
+and g is biased negative: the prediction would then be too slow. Test after the race:
+(1) actual time vs the interval; (2) g recomputed with Milan runs only; (3) g recomputed with
+the measurements before the taper (up to 8 Nov). If the race is faster than 1:31:12, this
+confound is the first explanation to examine. The athlete's own target pace (4:28–4:33 /km,
+1:34:16–1:36:01) is close to the central prediction; it was not used.
