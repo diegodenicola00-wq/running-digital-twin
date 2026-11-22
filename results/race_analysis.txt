@@ -1,0 +1,7 @@
+Half marathon 22-Nov-2026: chip time 01:34:12; watch 21.11 km, mean HR 165
+Halves: 00:45:10 / 00:44:21 (-1.8 %), HR 158 / 172 bpm, EF 1.956 / 1.780
+Implied Riegel exponent (no fitness change): 1.115
+all runs (as pre-registered): n = 121, g = -3.82 % +- 2.23 %, central 01:34:01, error +11 s
+Milan runs only: n = 78, g = -3.86 % +- 2.31 %, central 01:34:03, error +9 s
+before the taper (to 8 Nov): n = 116, g = -2.93 % +- 2.19 %, central 01:33:10, error +62 s
+Milan only, before the taper: n = 73, g = -2.13 % +- 2.47 %, central 01:32:24, error +108 s

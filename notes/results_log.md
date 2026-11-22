@@ -537,3 +537,29 @@ and g is biased negative: the prediction would then be too slow. Test after the 
 the measurements before the taper (up to 8 Nov). If the race is faster than 1:31:12, this
 confound is the first explanation to examine. The athlete's own target pace (4:28–4:33 /km,
 1:34:16–1:36:01) is close to the central prediction; it was not used.
+
+---
+
+## 2026-11-22 — RACE RESULT: Milano Half Marathon
+
+**Official chip time: 1:34:12** (4:28 /km).
+Pre-registered prediction (commit 580331d, 20 Nov): central 1:34:08, 80 % interval
+1:31:12 – 1:37:14 → error +4 s (+0.07 %), inside the interval.
+
+Implied Riegel exponent: 1.115 with g = 0 (Riegel alone with e = 1.06 was 3:46 too fast);
+1.062 with the estimated g = −3.9 %. The fitness term from the Kalman baseline is what
+moved the prediction from 1:30:26 to the right value.
+
+Caveats, to discuss in the report:
+- a 4-second error is partly luck: the interval is about ±3 minutes;
+- the athlete KNEW the prediction (and his own target pace was 4:28–4:33 /km) before the
+  race: pacing to the prediction is possible (observer effect), so the agreement is weaker
+  evidence than it looks;
+- the pre-race hypothesis (g biased negative by the fatigue–HR confound → prediction too
+  slow) is NOT supported by this result; still to check with the planned sensitivity runs
+  (Milan only, measurements up to 8 Nov) and with the race file (pacing, HR drift).
+- Sat 21 Nov: the planned shake-out (~20 min very easy + strides, ~3 km, ~25 TRIMP
+  estimated) was done but NOT recorded: it is missing from the daily load. Effect: the
+  model state of race day is slightly off (in the nominal model a load the day before the
+  race has weight f = −1); no effect on the prediction (load history ends 19 Nov for g; the
+  freshness check used athlete_plan.csv, which contained this session).

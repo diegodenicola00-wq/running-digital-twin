@@ -141,4 +141,11 @@ function cfg = config()
     cfg.pred.nMC        = 1e5;                     % [-]  Monte Carlo samples
     cfg.pred.interval   = [10 90];                 % [%]  percentiles of the interval
     cfg.pred.seed       = 1;
+
+    % --- Race result and post-race checks (Step 6, after 22 Nov 2026) --------------
+    % The sensitivity checks below were registered BEFORE the race (results_log, 20 Nov).
+    cfg.race.chipTime    = 1*3600 + 34*60 + 12;    % [s]  official chip time 1:34:12
+    cfg.race.predCentral = 1*3600 + 34*60 + 8;     % [s]  pre-registered central prediction (commit 580331d)
+    cfg.race.predCutoff  = datetime(2026, 11, 19); % last measurement used by the prediction
+    cfg.race.preTaperEnd = datetime(2026, 11, 8);  % last measurement before the taper
 end
