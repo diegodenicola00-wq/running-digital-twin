@@ -97,3 +97,54 @@ identification → control → embedded → field test on a real system.
   of Step 4 (mean normalized innovation +0.32, 17/25 positive).
 - Air temperature as a measured input of the filter instead of a covariate.
 
+
+---
+
+# Phase 2 plan (22 Nov 2026, minimal version): chest strap, Stramilano 2027, trail
+
+Goal: collect strap/HRV data during the preparation, REPEAT the pre-registered prediction
+for the Stramilano with the SAME method as November (replication), analyse the rest after
+the race. Sensor: Garmin HRM 600 chest strap (bought Nov 2026).
+
+Constraints: Milan until 11 Dec (track available); L'Aquila 12 Dec – 7 Jan (hilly, no
+track); no training 14–18 Dec, 24–25 Dec, 1 Jan; exam session from 7 Jan (no time for the
+project: data collection only); ski week end Feb / early Mar (running uncertain).
+
+## 1. Now – 11 Dec (Milan): set-up and validation
+- Morning HRV: RR-interval app (Elite HRV or HRV Logger), supine, 3 min, every morning.
+- 3–4 easy validation runs: strap paired to the PHONE (RR app), watch on OPTICAL HR;
+  1–2 of them with 4–6 strides of 20–30 s (transients → optical lag).
+- Validation analysis by 10–11 Dec: optical error and lag, share of the measurement
+  noise (0.078 of Step 3) due to the sensor, TRIMP bias. (~30 min of the athlete's time)
+- Step test 1 on the track, 8–11 Dec: 15' warm-up, 4 × (4' at ~10 km/h + 4' at ~13 km/h),
+  cool-down; strap paired to the watch.
+- Code (Claude): sensor-change date in config, RR-file reader, strap/watch alignment.
+
+## 2. 12 Dec – end Feb (L'Aquila, then exams): data collection only
+- Morning HRV when possible, also on rest days (14–18 Dec, 24–25 Dec, 1 Jan).
+- Training plan (separate chat) includes: 3 step tests on the track from January, every
+  ~3 weeks, same time of day, strap (last one before the ski week); a 5/10 km time trial
+  or race by ~20 Feb (second anchor).
+- Ski week: skiing recorded with the watch (optical HR is fine); strap optional (without
+  it: one week without HRV).
+- No exports, no scripts.
+
+## 3. March: about one hour
+- Export, update dates in config, run the scripts.
+- Prediction committed by 19 Mar with the SAME method as November. MPC taper optional.
+- Stramilano: Sun 21 Mar 2027, 8:30, Piazza Castello.
+
+## 4. April – May: analysis (light, while preparing the trail)
+- Identification of the HR dynamics from the step tests: does it change with training?
+- Kalman filter with HRV as second output: does fitness become observable?
+- HR-based pace controller (PI), then Connect IQ data field.
+- Report update: replication of the prediction, sensor validation.
+
+## 5. Phase 3, optional: mountain trail 22 km (5 Jun 2027, to be confirmed)
+- Possible third prediction on different terrain: course converted to an equivalent flat
+  distance with the Minetti grade correction, from the official GPX.
+- Uphill training data to study the HR response on climbs.
+
+Reminders: Stramilano registration cheapest until 31 Jan 2027; every rule of a prediction
+is fixed BEFORE seeing the data; all step tests in the same conditions (track, same time,
+strap) — a treadmill series would be separate.
