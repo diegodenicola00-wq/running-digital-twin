@@ -1006,9 +1006,134 @@ model for each plan, as a percentage of the best achievable on race day
 
 % ---------------------------------------------------------------------
 \section{Pre-registered prediction and race result}\label{sec:race}
-% Prediction committed to the repository before 22 Nov 2026 (commit hash
-% and date), actual result, error analysis.
-\todo{After the race.}
+
+The last step of the project is the test that motivated it: a prediction of the
+half marathon of 22~November 2026, written down before the race, compared with
+the result.
+
+\subsection{The prediction}
+The method was fixed and committed to the repository on 1~November, three weeks
+before the race, and only re-run on 20~November with the last training data. It
+converts the only race of the period, the \SI{10}{km} of 27~September (40:59),
+with the formula of \citet{riegel1981}, and corrects it for the change of aerobic
+fitness since that race:
+\begin{equation}
+T_{21.1} = T_{10}\left(\frac{21.0975}{10}\right)^{e} \frac{1}{1 + g}.
+\label{eq:pred}
+\end{equation}
+The exponent $e$, which describes how much the speed decreases with the distance,
+is not known for this athlete and is taken uniform between 1.04 and 1.08 (central
+value 1.06). The fitness term $g$ is the relative change of the aerobic baseline
+$b$ of the Kalman filter (Section~\ref{sec:kf}) from 27~September to the last
+run, assuming that at the same heart rate the speed scales with the efficiency.
+Since the value of $b$ on 27~September is also corrected by the later
+measurements, the difference and its uncertainty were computed with a
+\emph{fixed-point smoother}: the state of the filter is augmented with a copy of
+$b$ frozen on 27~September, so that a plain Kalman filter gives both the smoothed
+value and the exact covariance of the difference. The 80\,\% interval comes from a
+Monte Carlo simulation over $e$ and $g$. The freshness given by the taper was not
+used in the number, because both races followed a reduction of the load and the
+model cannot convert form into seconds.
+
+With the data up to 19~November, the baseline had decreased from 1.588 to
+\SI{1.525}{m/beat}, $g = -3.9 \pm \SI{2.2}{\percent}$. Riegel's formula alone gives
+1:29:05, 1:30:26 and 1:31:47 for $e$ = 1.04, 1.06 and 1.08; with the fitness term
+the prediction was
+\begin{center}
+\textbf{1:34:08} (4:28 per km), \quad 80\,\% interval 1:31:12 -- 1:37:14,
+\end{center}
+committed on 20~November (commit \texttt{580331d}, Figure~\ref{fig:pred}). The
+same day, the log of the project recorded a hypothesis to be tested after the
+race: since fatigue lowers the submaximal heart rate (Section~\ref{sec:id}), the
+removal of fatigue during the taper could make the measured efficiency fall and
+the prediction too slow.
+
+\begin{figure}[ht]
+\centering
+\safefig[0.85\linewidth]{fig10_prediction.pdf}{Pre-registered prediction:
+distribution of the half-marathon time over the uncertain exponent and fitness
+change, central value and 80\,\% interval.}
+\label{fig:pred}
+\end{figure}
+
+\subsection{The race}
+The official chip time was \textbf{1:34:12}: \SI{4}{s} slower than the central
+prediction, an error of \SI{0.07}{\percent}, well inside the interval.
+Riegel's formula alone, with the central exponent, would have been almost four
+minutes too fast; the result corresponds to an exponent of 1.115 without fitness
+change, or to the central value 1.06 with the estimated $g$. The fitness term is
+therefore what moved the prediction to the right value.
+
+\begin{figure}[ht]
+\centering
+\safefig{fig11_race.pdf}{Split of every kilometre and mean heart rate during the
+half marathon (watch data).}
+\label{fig:race}
+\end{figure}
+
+The watch data (Figure~\ref{fig:race}) show a controlled race. The first
+\SI{10}{km} took 45:10 and the second 44:21 ($-\SI{1.8}{\percent}$, a negative
+split), with the last two kilometres in 4:15 and 4:12. The heart rate rose from
+158 to \SI{172}{bpm} between the two halves (cardiac drift), so the efficiency
+measured during the race fell by \SI{9}{\percent} even at a slightly higher speed.
+The mean heart rate was \SI{165}{bpm}, \SI{78}{\percent} of the heart-rate reserve.
+
+\subsection{Checks registered before the race}
+Table~\ref{tab:checks} repeats the computation of $g$, with the same method and
+parameters, changing only the measurements used, as registered on 20~November.
+After the race the heart-rate model of Section~\ref{sec:id} was re-estimated with
+the race file included, so the first line differs by a few seconds from the
+committed prediction.
+
+\begin{table}[ht]
+\centering
+\caption{Sensitivity of the fitness term $g$ and of the resulting prediction to
+the measurements used. Error = actual $-$ predicted time.}
+\label{tab:checks}
+\small
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+Measurements & $n$ & $g$ [\%] & Prediction & Error [s] \\
+\midrule
+all runs (as pre-registered)       & 121 & $-3.8 \pm 2.2$ & 1:34:01 & $+11$ \\
+Milan runs only                    &  78 & $-3.9 \pm 2.3$ & 1:34:03 & $+9$ \\
+up to 8 November (before taper)    & 116 & $-2.9 \pm 2.2$ & 1:33:10 & $+62$ \\
+Milan only, before taper           &  73 & $-2.1 \pm 2.5$ & 1:32:24 & $+108$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Two results stand out. First, the runs in L'Aquila and at altitude are not the
+cause of the decrease of the baseline: with Milan runs only, $g$ is the same.
+Second, the hypothesis registered before the race is not supported. Without the
+measurements of the taper the prediction would have been faster and \emph{worse},
+by one to two minutes: the taper measurements moved it towards the actual time.
+A possible explanation is that during the taper the heart rate at a given speed
+is that of a rested athlete, as on race day, while the measurements of the
+heavier weeks are lowered by fatigue \citep{bosquet2008}; the efficiency measured
+in the taper would then describe the state of the race better. This is a
+hypothesis suggested by one race, not a result.
+
+\subsection{How much does the agreement prove?}
+An error of four seconds should not be over-interpreted, for three reasons.
+\begin{itemize}
+\item \textbf{Chance.} The 80\,\% interval is six minutes wide, and the uncertainty
+of $g$ alone is about two minutes: a result within a minute of the central value
+would have been an equally good outcome, and the four seconds are partly luck.
+\item \textbf{The athlete knew the prediction.} The predicted pace, 4:28 per km,
+was also inside the pace the athlete had used for half-marathon training
+(4:28--4:33), and the race was run at exactly that pace, with a fast finish and a
+moderate heart rate. A runner who paces to a target can make a prediction come
+true: the race measures the performance chosen as much as the performance
+possible, and the athlete was probably able to run somewhat faster.
+\item \textbf{One race.} A single comparison cannot validate a method; it can
+only fail to falsify it. The same holds for the anchor: everything rests on one
+\SI{10}{km} race.
+\end{itemize}
+Finally, a shake-out run on the day before the race was done but not recorded,
+so the load history of the last days is slightly incomplete; it has no effect on
+the prediction, whose data end on 19~November.
+
 
 % ---------------------------------------------------------------------
 \section{Discussion and limitations}\label{sec:discussion}
