@@ -41,16 +41,29 @@
 of endurance-training adaptation from wearable data}
 \author{Diego De Nicola\\
 \small MSc Mechanical Engineering (Mechatronics and Robotics), Politecnico di Milano}
-\date{\todo{date}}
+\date{November 2026}
 
 \begin{document}
 \maketitle
 
 % ---------------------------------------------------------------------
 \begin{abstract}
-\todo{Write LAST, after the race (150--200 words): problem, data, methods
-(identification, Kalman filter, MPC), main quantitative results,
-pre-registered prediction vs actual half-marathon time.}
+The training of a runner is treated as a dynamic system: the daily training load
+is the input, fitness and fatigue are hidden states, and performance is the
+output. Using about one year of data from the author's own sports watch, the
+project applies the chain of system identification, state estimation and
+optimal planning to the preparation of a half marathon. The fitness--fatigue
+model turned out not to be identifiable from heart-rate-based performance
+indices: the noise is as large as the signal, and fatigue lowers the submaximal
+heart rate, so that it raises the measured efficiency. A Kalman filter with a
+random-walk aerobic baseline predicted the next measurement 17\,\% better than
+the mean of the training data, with consistent innovations, although fitness is
+not observable. A robust linear program over uncertain fatigue parameters gave a
+taper of about ten days, consistent with the literature. Finally, a prediction of
+the race time was committed to the repository before the race: 1:34:08, with an
+80\,\% interval of 1:31:12--1:37:14. The official time was 1:34:12. The limits of
+this agreement (one athlete, one race, a runner who knew the prediction) are
+discussed.
 \end{abstract}
 
 % ---------------------------------------------------------------------
@@ -1137,19 +1150,121 @@ the prediction, whose data end on 19~November.
 
 % ---------------------------------------------------------------------
 \section{Discussion and limitations}\label{sec:discussion}
-% Single athlete (n = 1); wrist optical HR; identifiability; seasonal
-% confounding (heat acclimatisation vs fatigue); selection of runs.
-\todo{Discussion.}
+
+\subsection{What worked and what did not}
+Looking back at the chain of Section~\ref{sec:intro}, the results are mixed, and
+the negative ones are as informative as the positive ones.
+\begin{itemize}
+\item \textbf{The data pipeline worked.} Twenty thousand files of a full account
+export were reduced to 114 runs and a daily load, checked against the summaries
+of the watch, with a few corrections (duplicates, field order, treadmill runs)
+that are typical of real data.
+\item \textbf{The identification failed}, and the reason was understood. The
+fitness--fatigue parameters cannot be estimated from heart-rate-based indices:
+the noise of a single run is as large as the variations to be explained, and,
+more importantly, fatigue lowers the submaximal heart rate and therefore
+\emph{raises} the measured efficiency, the opposite of what the model assumes.
+The time constants of the literature had to be used instead.
+\item \textbf{The Kalman filter was useful, but not for what it was designed
+for.} Fitness is not observable from the efficiency, so the filter cannot
+estimate it; it does, however, track an aerobic baseline and predict the next
+measurement better than any simple predictor, with consistent innovations.
+\item \textbf{The planning gave a sensible taper}, of about ten days, in agreement
+with the literature, only because the uncertainty of the parameters was taken
+into account explicitly; the nominal plan would have tapered for six days. Weekly
+re-planning, on the other hand, brought no measurable benefit, for the
+structural reasons discussed in Section~\ref{sec:mpc}.
+\item \textbf{The prediction was accurate}, four seconds from the result, and its
+accuracy came from the fitness term estimated by the filter, not from the
+distance conversion alone.
+\end{itemize}
+
+\subsection{Limitations}
+\paragraph{One athlete, one season, one race.} Everything is based on a single
+runner, about one year of data and one race used as an anchor and one as a
+test. The results describe this athlete and cannot be generalised; a single
+successful prediction does not validate the method (Section~\ref{sec:race}).
+
+\paragraph{The sensor.} Heart rate was measured only by the optical sensor of the
+watch, which reacts with a delay, loses contact on some runs and was never
+compared with a chest strap. Both the training load and the performance index
+depend on it, so its errors enter the input and the output of the model at the
+same time.
+
+\paragraph{The performance measure.} This is the main limitation. The model needs
+the performance of the athlete, but the only frequent measure available is
+submaximal and based on heart rate. Such indices mix fitness and fatigue
+\citep{bosquet2008}, so the output of the system is not the quantity that the
+model describes. Maximal efforts (races, time trials) would be the right
+measurement, but they are too rare to identify a dynamic model.
+
+\paragraph{The model.} The fitness--fatigue model is linear and sees only the
+total load. It ignores the intensity distribution and the specificity of the
+sessions (half-marathon pace work), it has no short-term priming effect (the
+shake-out run before the race is pure fatigue for it), and its parameters were
+taken from the literature, with ranges that are a reasonable guess rather than
+a measured uncertainty.
+
+\paragraph{Environment and choices of the analysis.} Heat, altitude and hills
+were checked and found to have no detectable effect, but on small samples. The
+thresholds that select the runs and the windows of the analysis were chosen on
+the data themselves; only the final prediction was protected against this by
+pre-registration.
+
+\paragraph{The athlete in the loop.} The athlete followed his own programme and
+not the optimised one, moved and skipped sessions, did not record one run, and
+knew the prediction before the race. This is how such a tool would be used in
+practice, but it means that the planner was never tested in closed loop on the
+real system, and that the race result may partly reflect the pacing choice.
+
+\subsection{Lessons on the method}
+Three points go beyond running. First, an identifiability analysis (cost maps,
+confidence regions, observability) should come before any use of a model: here it
+showed early that the model could not be calibrated, and changed the rest of the
+project. Second, when parameters cannot be identified, the uncertainty can still
+be used: the robust plan, which maximises the worst case, was more reasonable than
+the nominal one at almost no cost. Third, writing predictions and hypotheses down
+before the outcome is known makes the conclusions honest: the hypothesis
+registered before the race turned out to be wrong, and this is a result.
 
 % ---------------------------------------------------------------------
 \section{Conclusions and future work}\label{sec:conclusions}
-% Dynamic HR model per run (EF from all runs); chest-strap validation;
-% time-varying parameters.
-\todo{Conclusions.}
+
+This project treated the training of a runner as a control problem and applied to
+it the full chain of system identification, state estimation and optimal
+planning, using only the data of a sports watch. The fitness--fatigue model could
+not be identified from heart-rate-based measures, because fatigue makes the
+heart-rate efficiency increase; a Kalman filter with a random-walk aerobic
+baseline nevertheless gave useful estimates and predictions; a robust linear
+program over the uncertain fatigue parameters produced a taper consistent with
+the literature; and a prediction registered before the race, 1:34:08, was four
+seconds from the actual time of 1:34:12.
+
+The limitations of Section~\ref{sec:discussion} point directly to the next steps,
+most of which are themselves mechatronic problems:
+\begin{itemize}
+\item \textbf{A better sensor.} A chest strap would validate the optical sensor and
+give beat-to-beat intervals; heart-rate variability measured every morning is a
+second output, sensitive to fatigue in a different way, that could make the model
+observable.
+\item \textbf{Designed experiments.} The heart-rate dynamics could not be identified
+run by run because easy runs do not excite them. A test run with speed steps on a
+track would identify gain and time constant in each session, and their change
+over time would be a new measure of fitness.
+\item \textbf{Closing the loop on the run.} With the heart-rate dynamics identified,
+a PI controller could tell the runner to speed up or slow down to hold a target
+heart rate, designed on the model, simulated, and implemented on the watch.
+\item \textbf{Better models and estimators.} Time-varying fatigue gains
+\citep{busso2003}, a trend state for the aerobic baseline, and joint estimation of
+states and parameters with an extended Kalman filter.
+\item \textbf{More anchors.} Regular time trials or races would give maximal
+performances, the measurement that the model actually needs, and would allow the
+absolute gains to be estimated.
+\end{itemize}
 
 % ---------------------------------------------------------------------
 \section*{Reproducibility}
-All code is available at \todo{GitHub URL}. Raw data are not published
+All code is available at \url{https://github.com/diegodenicola00-wq/running-digital-twin}; the pre-registered prediction is commit \texttt{580331d} (20~November~2026). Raw data are not published
 because activity files contain GPS tracks.
 
 \bibliographystyle{plainnat}
