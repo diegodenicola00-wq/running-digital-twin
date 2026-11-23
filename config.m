@@ -148,4 +148,17 @@ function cfg = config()
     cfg.race.predCentral = 1*3600 + 34*60 + 8;     % [s]  pre-registered central prediction (commit 580331d)
     cfg.race.predCutoff  = datetime(2026, 11, 19); % last measurement used by the prediction
     cfg.race.preTaperEnd = datetime(2026, 11, 8);  % last measurement before the taper
+
+    % --- Phase 2: morning HRV (HRM 600 chest strap, HRV Logger) -------------------
+    % Rules fixed on 23 Nov 2026, before the series is collected (main_08_hrv.m).
+    cfg.hrv.dir        = fullfile(root, 'data', 'raw', 'hrv');
+    cfg.hrv.strapStart = datetime(2026, 11, 23);   % first day with the chest strap
+    cfg.hrv.morning    = [4 12];                   % [h]  a morning session starts in this range
+    cfg.hrv.skip       = 60;                       % [s]  settling time dropped at the start
+    cfg.hrv.rrMin      = 300;                      % [ms] plausible RR range
+    cfg.hrv.rrMax      = 2000;                     % [ms]
+    cfg.hrv.medWin     = 11;                       % [beats] window of the local median
+    cfg.hrv.artTol     = 0.25;                     % [-]  artifact if |rr - median| > 25 %
+    cfg.hrv.minDur     = 180;                      % [s]  minimum analysed time
+    cfg.hrv.maxArt     = 0.05;                     % [-]  maximum artifact fraction
 end
