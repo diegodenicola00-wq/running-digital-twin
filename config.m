@@ -161,4 +161,8 @@ function cfg = config()
     cfg.hrv.artTol     = 0.25;                     % [-]  artifact if |rr - median| > 25 %
     cfg.hrv.minDur     = 180;                      % [s]  minimum analysed time
     cfg.hrv.maxArt     = 0.05;                     % [-]  maximum artifact fraction
+    % context notes (rule of 26 Nov 2026): tagged days stay in the main series;
+    % one sensitivity check only, without the tags below.
+    cfg.hrv.notesFile   = 'notes.csv';
+    cfg.hrv.sensExclude = "sick";
 end
