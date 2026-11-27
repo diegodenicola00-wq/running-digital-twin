@@ -13,6 +13,10 @@ function S = read_hrvlogger_rr(file)
 %   to the previous one to the millisecond is rare and its loss does not change
 %   rMSSD: the difference would be 0 anyway, only the count of pairs changes.)
 %
+%   Use it for RESTING recordings only: during running (~2.5 beats/s) the app
+%   keeps at most 2 RR per packet, so beats are missing, and two true
+%   consecutive beats with the same RR are common (see main_09_validation).
+%
 %   The time stamps say "+0000" but are local time: the zone is ignored.
 %   Latitude/longitude are in the Features file, not here, and are never read.
 %
@@ -22,11 +26,13 @@ function S = read_hrvlogger_rr(file)
 %   S.nRaw    number of rows in the file
 %   S.wall    [s]  wall-clock span of the file (last minus first time stamp)
 
-fid = fopen(file, 'r');
-if fid < 0, error('Cannot open %s', file); end
-c = onCleanup(@() fclose(fid));
-fgetl(fid);                                             % header
-C = textscan(fid, '%s %f %f', 'Delimiter', ',', 'Whitespace', '');
+% Line endings: the morning exports use LF, the workout exports use CR only
+% (old Mac style), so the file is read whole and split on any line break.
+txt = fileread(file);
+L = regexp(txt, '\r\n|\r|\n', 'split');
+L = L(2:end);                                           % drop the header
+L = L(~cellfun(@(x) isempty(strtrim(x)), L));
+C = textscan(strjoin(L, newline), '%s %f %f', 'Delimiter', ',', 'Whitespace', '');
 stamp = strtrim(C{1});  rr = C{2};
 ok = ~isnan(rr) & ~cellfun(@isempty, stamp);
 stamp = stamp(ok);  rr = rr(ok);

@@ -165,4 +165,25 @@ function cfg = config()
     % one sensitivity check only, without the tags below.
     cfg.hrv.notesFile   = 'notes.csv';
     cfg.hrv.sensExclude = "sick";
+
+    % --- Phase 2: optical (wrist) HR vs chest strap, validation runs ---------------
+    % Rules fixed on 27 Nov 2026 BEFORE comparing the two devices (main_09_validation.m).
+    % Reference: HR computed by the HRM 600 (HRV Logger "HR" export, 1 Hz). The RR export is
+    % NOT used for running: the app stores at most 2 RR per Bluetooth packet (1 packet/s),
+    % so above ~120 bpm beats are missing from it (check of 27 Nov: 1710 s of RR in 2303 s).
+    cfg.val.dir        = fullfile(root, 'data', 'raw', 'hrv_runs');
+    cfg.val.edge       = 60;          % [s]  stand-still at start and end, excluded
+    cfg.val.speedWin   = 10;          % [s]  moving mean of the watch speed
+    cfg.val.vSteady    = [2.2 3.5];   % [m/s] easy-running speed band ("steady")
+    cfg.val.vStride    = 3.8;         % [m/s] a stride starts above this speed
+    cfg.val.strideWin  = 90;          % [s]  stride segment: start of the stride + 90 s
+    cfg.val.afterStride = 60;         % [s]  no "steady" sample within 60 s after a stride
+    cfg.val.maxLag     = 20;          % [s]  lag search of the cross-correlation
+    cfg.val.hpWin      = 60;          % [s]  high-pass for the lag: minus 60-s moving mean
+    cfg.val.tolBpm     = 5;           % [bpm] "agreement" band for the % of samples
+    % acceptance for the project (decided on all runs pooled, 10-11 Dec 2026):
+    % optical HR is fine for the efficiency factor if |EF bias| <= 2 % and the
+    % 95 % limits of agreement in "steady" are within +-5 bpm.
+    cfg.val.accEF      = 0.02;        % [-]
+    cfg.val.accLoA     = 5;           % [bpm]
 end

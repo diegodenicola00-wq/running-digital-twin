@@ -563,3 +563,26 @@ Caveats, to discuss in the report:
   model state of race day is slightly off (in the nominal model a load the day before the
   race has weight f = −1); no effect on the prediction (load history ends 19 Nov for g; the
   freshness check used athlete_plan.csv, which contained this session).
+
+---
+
+## 2026-11-27 — Phase 2: validation of the optical HR (rules fixed before the comparison)
+
+First validation run today (easy ~35 min + 4 strides; strap → phone with HRV Logger,
+watch on wrist HR only — checked in the FIT: all sensors are internal, no external HR).
+
+Findings on the data, before any comparison:
+- HRV Logger workout exports use CR-only line endings: readers now split on any line break.
+- The RR export is incomplete while running: one Bluetooth packet per second, at most
+  2 RR stored per packet → above ~120 bpm beats are missing (1710 s of RR in a 2303 s
+  run). It is fine at rest (≤ 1 beat per packet; morning check: 297 s in 301 s).
+  So the reference for the validation is the HR computed by the strap (HR export, 1 Hz);
+  beat-by-beat HRV during running (e.g. DFA alpha1) is NOT possible with this setup.
+- Seen before fixing the rules: Garmin summary average HR 142 bpm; strap HR per minute.
+
+Rules (cfg.val, main_09_validation.m): absolute time, no shift; first/last 60 s excluded;
+"steady" = watch speed 2.2–3.5 m/s and > 60 s after a stride; "strides" = stride start
+(> 3.8 m/s) + 90 s; bias, SD, 95 % LoA, MAE, % within ±5 bpm; optical lag by
+cross-correlation (±20 s, 60-s high-pass); EF bias = (HRs−HRrest)/(HRw−HRrest) − 1.
+Acceptance, decided on all runs pooled (10–11 Dec): |EF bias| ≤ 2 % and steady LoA
+within ±5 bpm. Single runs are provisional.
